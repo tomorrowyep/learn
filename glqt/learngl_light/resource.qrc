@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>shader.frag</file>
+        <file>shader.vert</file>
+        <file>shaderLight.frag</file>
+        <file>shaderLight.vert</file>
+    </qresource>
+    <qresource prefix="/images"/>
+</RCC>
