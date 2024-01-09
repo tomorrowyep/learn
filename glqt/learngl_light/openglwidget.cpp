@@ -140,14 +140,26 @@ void OpenglWidget::paintGL()
     m_pShaderProgram.setUniformValue("projection", projection);
     m_pShaderProgram.setUniformValue("objectColor", objectColor);
     m_pShaderProgram.setUniformValue("lightColor", lightColor);
-    m_pShaderProgram.setUniformValue("lightPos", lightPos);
     m_pShaderProgram.setUniformValue("viewPos", m_cameraPos);
+
+    // 设置材质
+    m_pShaderProgram.setUniformValue("material.ambient",  1.0f, 0.5f, 0.31f);
+    m_pShaderProgram.setUniformValue("material.diffuse",  1.0f, 0.5f, 0.31f);
+    m_pShaderProgram.setUniformValue("material.specular", 0.5f, 0.5f, 0.5f);
+    m_pShaderProgram.setUniformValue("material.shininess", 32.0f);
+
+    // 设置光照的分量强度
+    m_pShaderProgram.setUniformValue("light.position",  lightPos);
+    m_pShaderProgram.setUniformValue("light.ambient",  0.2f, 0.2f, 0.2f);
+    m_pShaderProgram.setUniformValue("light.diffuse",  0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
+    m_pShaderProgram.setUniformValue("light.specular", 1.0f, 1.0f, 1.0f);
 
     glBindVertexArray(m_nVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     // 绘制光源立方体
     m_pLightShaderProgram.bind();
+    model = QMatrix4x4();
     model.translate(lightPos);
     model.scale(QVector3D(0.2, 0.2, 0.2));
     m_pLightShaderProgram.setUniformValue("model", model);
