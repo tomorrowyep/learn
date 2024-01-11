@@ -5,5 +5,8 @@
         <file>shaderLight.frag</file>
         <file>shaderLight.vert</file>
     </qresource>
-    <qresource prefix="/images"/>
+    <qresource prefix="/images">
+        <file>container.png</file>
+        <file>container_specular.png</file>
+    </qresource>
 </RCC>

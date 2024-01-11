@@ -32,6 +32,8 @@ private:
     unsigned int m_nVAOLight = 0;
     QOpenGLShaderProgram m_pShaderProgram;
     QOpenGLShaderProgram m_pLightShaderProgram;
+    QOpenGLTexture *m_texture;
+    QOpenGLTexture *m_texture1;
     QTimer *m_time = nullptr;
 
     // 摄像机
