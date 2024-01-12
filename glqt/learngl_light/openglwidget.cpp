@@ -8,10 +8,23 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 
-//constexpr float PI = 3.1415926;
+constexpr float PI = 3.1415926f;
 QVector3D lightColor(1.0, 1.0, 1.0);
 QVector3D objectColor(1.0f, 0.5f, 0.31f);
 const QVector3D lightPos(1.2f, 1.0f, 2.0f);
+const QVector3D cubePositions[] =
+{
+  QVector3D( 0.0f,  0.0f,  0.0f),
+  QVector3D( 2.0f,  5.0f, -15.0f),
+  QVector3D(-1.5f, -2.2f, -2.5f),
+  QVector3D(-3.8f, -2.0f, -12.3f),
+  QVector3D( 2.4f, -0.4f, -3.5f),
+  QVector3D(-1.7f,  3.0f, -7.5f),
+  QVector3D( 1.3f, -2.0f, -2.5f),
+  QVector3D( 1.5f,  2.0f, -2.5f),
+  QVector3D( 1.5f,  0.2f, -1.5f),
+  QVector3D(-1.3f,  1.0f, -1.5f)
+};
 
 OpenglWidget::OpenglWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
@@ -158,15 +171,39 @@ void OpenglWidget::paintGL()
     m_pShaderProgram.setUniformValue("material.shininess", 32.0f);
 
     // 设置光照的分量强度
-    m_pShaderProgram.setUniformValue("light.position",  lightPos);
+    m_pShaderProgram.setUniformValue("light.position",  lightPos);// 点光源
+    m_pShaderProgram.setUniformValue("light.lightDirect", 0.0f, 0.0f, -1.0f);// 平行光，类似太阳光
     m_pShaderProgram.setUniformValue("light.ambient",  0.2f, 0.2f, 0.2f);
     m_pShaderProgram.setUniformValue("light.diffuse",  0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
     m_pShaderProgram.setUniformValue("light.specular", 1.0f, 1.0f, 1.0f);
 
+    // 设置点光源线性衰减
+    m_pShaderProgram.setUniformValue("light.constant",  1.0f);
+    m_pShaderProgram.setUniformValue("light.linear",    0.09f);
+    m_pShaderProgram.setUniformValue("light.quadratic", 0.032f);
+
+     // 设置聚光
+    float cutOff = cos(12.5f * PI / 180);
+    float outCutOff = cos(17.5f * PI / 180);
+    m_pShaderProgram.setUniformValue("flashlight.position",  m_cameraPos);
+    m_pShaderProgram.setUniformValue("flashlight.direction", m_cameraFront);
+    m_pShaderProgram.setUniformValue("flashlight.cutOff",   cutOff);
+    m_pShaderProgram.setUniformValue("flashlight.outerCutOff",   outCutOff);
+
     m_texture->bind(0);
     m_texture1->bind(1);
     glBindVertexArray(m_nVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    // 绘制多个对象，就是改变model矩阵，在世界坐标的不同位置
+    for(unsigned int i = 0; i < 10; i++)
+    {
+        QMatrix4x4 model;
+        model.translate(cubePositions[i]);
+        float angle = 15.0f * i;
+        model.rotate(angle, QVector3D(1.0f, 0.3f, 0.5f));
+        m_pShaderProgram.setUniformValue("model", model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     // 绘制光源立方体
     m_pLightShaderProgram.bind();
