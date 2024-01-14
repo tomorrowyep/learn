@@ -28,6 +28,8 @@ OpenglWidget::~OpenglWidget()
     makeCurrent();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    m_pTextureWall->destroy();
+    m_pTextureBoard->destroy();
 
     doneCurrent();
 }
@@ -126,6 +128,10 @@ void OpenglWidget::initializeGL()
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
     m_pShaderProgram.link();
 
+    m_pShaderProgramStencil.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
+    m_pShaderProgramStencil.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shaderstencil.frag");
+    m_pShaderProgramStencil.link();
+
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
 
@@ -133,8 +139,8 @@ void OpenglWidget::initializeGL()
     m_pShaderProgram.setUniformValue("texture", 0);
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 }
 
 void OpenglWidget::resizeGL(int w, int h)
@@ -146,14 +152,14 @@ void OpenglWidget::resizeGL(int w, int h)
 void OpenglWidget::paintGL()
 {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // 设置mvp变换矩阵
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
+    m_pShaderProgram.bind();
     view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
     projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
     m_pShaderProgram.setUniformValue("view", view);
@@ -162,22 +168,58 @@ void OpenglWidget::paintGL()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // 画地板
+    glStencilMask(0x00);// 不让画地板影响到模板值
+    glBindVertexArray(m_bVAO);
+    m_pTextureBoard->bind(0);
+    model = QMatrix4x4();
+    m_pShaderProgram.setUniformValue("model", model);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // 画立方体是允许写入，并将绘制过的设为1
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    // 画第一个立方体
     model.translate(-1.0f, 0.0f, -1.0f);
     m_pShaderProgram.setUniformValue("model", model);
     glBindVertexArray(m_wVAO);
     m_pTextureWall->bind(0);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
+    // 画第二个立方体
     model = QMatrix4x4();
     model.translate(2.0f, 0.0f, 0.0f);
     m_pShaderProgram.setUniformValue("model", model);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+    m_pTextureWall->release();
+    m_pTextureBoard->release();
 
-    glBindVertexArray(m_bVAO);
-    m_pTextureBoard->bind(0);
+    // 画描边，禁止写入，设置通过模板测试行为,同时禁用深度测试
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+    m_pShaderProgramStencil.bind();
+    glBindVertexArray(m_wVAO);
+
+    float scale = 1.1f;
+    m_pShaderProgramStencil.setUniformValue("view", view);
+    m_pShaderProgramStencil.setUniformValue("projection", projection);
+
     model = QMatrix4x4();
-    m_pShaderProgram.setUniformValue("model", model);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    model.translate(-1.0f, 0.0f, -1.0f);
+    model.scale(scale, scale, scale);
+    m_pShaderProgramStencil.setUniformValue("model", model);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    model = QMatrix4x4();
+    model.translate(2.0f, 0.0f, 0.0f);
+    model.scale(scale, scale, scale);
+    m_pShaderProgramStencil.setUniformValue("model", model);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilMask(0xFF);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void OpenglWidget::keyPressEvent(QKeyEvent *event)
