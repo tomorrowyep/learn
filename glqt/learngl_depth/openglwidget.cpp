@@ -9,6 +9,15 @@
 #include <QWheelEvent>
 
 constexpr float PI = 3.1415926;
+QVector<QVector3D> vegetation
+{
+    // 生成草的位置
+   QVector3D(-1.5f,  0.0f, -0.48f),
+   QVector3D( 1.5f,  0.0f,  0.51f),
+   QVector3D( 0.0f,  0.0f,  0.7f),
+   QVector3D(-0.3f,  0.0f, -2.3f),
+   QVector3D( 0.5f,  0.0f, -0.6f),
+};
 
 OpenglWidget::OpenglWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
@@ -21,13 +30,21 @@ OpenglWidget::OpenglWidget(QWidget *parent) : QOpenGLWidget(parent)
      {
          update();
      });
+
+     for (int i = 0; i < vegetation.size(); i++)
+     {
+         float distance = (m_cameraPos - vegetation[i]).length();
+         sorted[distance] = vegetation[i];
+     }
 }
 
 OpenglWidget::~OpenglWidget()
 {
     makeCurrent();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    glDeleteVertexArrays(1, &m_wVAO);
+    glDeleteVertexArrays(1, &m_bVAO);
+    glDeleteVertexArrays(1, &m_gVAO);
 
     doneCurrent();
 }
@@ -94,6 +111,18 @@ void OpenglWidget::initializeGL()
          5.0f, -0.5f, -5.0f,  2.0f, 2.0f
     };
 
+    // 草的顶点位置和纹理
+    float transparentVertices[] =
+    {
+          0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+          0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+          1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+          0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+          1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+          1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
     glGenVertexArrays(1, &m_wVAO);
     glBindVertexArray(m_wVAO);
 
@@ -122,19 +151,32 @@ void OpenglWidget::initializeGL()
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    glGenVertexArrays(1, &m_gVAO);
+    glBindVertexArray(m_gVAO);
+
+    unsigned int gVBO;
+    glGenBuffers(1, &gVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
     m_pShaderProgram.link();
 
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
-
-    m_pShaderProgram.bind();
-    m_pShaderProgram.setUniformValue("texture", 0);
+    //m_pTextureGrass = new QOpenGLTexture(QImage(":/images/grass.png"));
+    m_pTextureWin = new QOpenGLTexture(QImage(":/images/blending_transparent_window.png").mirrored());
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);// 开启混合
 }
 
 void OpenglWidget::resizeGL(int w, int h)
@@ -154,6 +196,7 @@ void OpenglWidget::paintGL()
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
+    m_pShaderProgram.bind();
     view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
     projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
     m_pShaderProgram.setUniformValue("view", view);
@@ -172,12 +215,26 @@ void OpenglWidget::paintGL()
     model.translate(2.0f, 0.0f, 0.0f);
     m_pShaderProgram.setUniformValue("model", model);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+    m_pTextureWall->release();
 
     glBindVertexArray(m_bVAO);
     m_pTextureBoard->bind(0);
     model = QMatrix4x4();
     m_pShaderProgram.setUniformValue("model", model);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    m_pTextureBoard->release();
+
+    glBindVertexArray(m_gVAO);
+    m_pTextureWin->bind(0);
+    // 按照顺序从远到近排序，因为深度测试的原因，先绘制不透明的
+    for(std::map<float, QVector3D>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
+    {
+        model = QMatrix4x4();
+        model.translate(it->second);
+        m_pShaderProgram.setUniformValue("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+    m_pTextureWin->release();
 }
 
 void OpenglWidget::keyPressEvent(QKeyEvent *event)

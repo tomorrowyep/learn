@@ -6,5 +6,7 @@
     <qresource prefix="/images">
         <file>wall.jpg</file>
         <file>board.png</file>
+        <file>grass.png</file>
+        <file>blending_transparent_window.png</file>
     </qresource>
 </RCC>

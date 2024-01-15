@@ -30,10 +30,14 @@ protected:
 private:
     unsigned int m_wVAO = 0;
     unsigned int m_bVAO = 0;
+    unsigned int m_gVAO = 0;// 草的vao
     QOpenGLShaderProgram m_pShaderProgram;
     QOpenGLTexture *m_pTextureWall = nullptr;
     QOpenGLTexture *m_pTextureBoard = nullptr;
+    QOpenGLTexture *m_pTextureGrass = nullptr;
+    QOpenGLTexture *m_pTextureWin = nullptr;
     QTimer *m_time = nullptr;
+    std::map<float, QVector3D> sorted;
 
     // 摄像机
     QVector3D m_cameraPos{0.0, 0.0, 3.0};// 摄像机的位置
