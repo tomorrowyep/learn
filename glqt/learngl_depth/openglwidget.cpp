@@ -45,6 +45,7 @@ OpenglWidget::~OpenglWidget()
     glDeleteVertexArrays(1, &m_wVAO);
     glDeleteVertexArrays(1, &m_bVAO);
     glDeleteVertexArrays(1, &m_gVAO);
+    glDeleteFramebuffers(1, &m_fBufO);
 
     doneCurrent();
 }
@@ -56,47 +57,47 @@ void OpenglWidget::initializeGL()
     // 立方体顶点数据
     float vertices[] =
     {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+        // Front face
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+        // Left face
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+        // Right face
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+        // Bottom face
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+        // Top face
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left
     };
 
     // 地板顶点数据
@@ -121,6 +122,17 @@ void OpenglWidget::initializeGL()
           0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
           1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
           1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+    float quadVertices[] =
+    {
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+        1.0f,  1.0f,  1.0f, 1.0f
     };
 
     glGenVertexArrays(1, &m_wVAO);
@@ -165,18 +177,92 @@ void OpenglWidget::initializeGL()
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
-    m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
-    m_pShaderProgram.link();
+    glGenVertexArrays(1, &m_qVAO);
+    glBindVertexArray(m_qVAO);
+
+    unsigned int qVBO;
+    glGenBuffers(1, &qVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, qVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
-    //m_pTextureGrass = new QOpenGLTexture(QImage(":/images/grass.png"));
-    m_pTextureWin = new QOpenGLTexture(QImage(":/images/blending_transparent_window.png").mirrored());
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);// 开启混合
+    bool ret = false;
+    m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
+    m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
+    ret = m_pShaderProgram.link();
+    if (!ret)
+        qDebug() << m_pShaderProgram.log();
+    m_pShaderProgram.bind();
+    m_pShaderProgram.setUniformValue("texture0", 0);
+
+    m_pFramebufShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/framebuf_shader.vert");
+    m_pFramebufShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/framebuf_shader.frag");
+    ret = m_pFramebufShaderProgram.link();
+    if (!ret)
+        qDebug() << m_pFramebufShaderProgram.log();
+    m_pFramebufShaderProgram.bind();
+    m_pFramebufShaderProgram.setUniformValue("texture1", 0);
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR)
+        qDebug() << "OpenGL error: " << error;// 判断是否有错误
+
+    // 绑定帧缓冲对象
+    glGenFramebuffers(1, &m_fBufO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
+
+    // 设置颜色缓冲附件
+    m_pTextureFrameBuf = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    m_pTextureFrameBuf->create();
+    m_pTextureFrameBuf->bind(0);
+    m_pTextureFrameBuf->setFormat(QOpenGLTexture::RGBFormat);
+    m_pTextureFrameBuf->setSize(width(), height());
+    m_pTextureFrameBuf->setMinificationFilter(QOpenGLTexture::Linear);
+    m_pTextureFrameBuf->setMagnificationFilter(QOpenGLTexture::Linear);
+    m_pTextureFrameBuf->allocateStorage();
+
+    /*glGenTextures(1, &textureColorbuffer);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width(), this->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glBindTexture(GL_TEXTURE_2D, 0);*/
+
+    // 绑定附件在帧缓冲对象
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_pTextureFrameBuf->textureId(), 0);
+
+    // 创建渲染缓冲对象，不用于采样，只用于数据交换，会更快
+    glGenRenderbuffers(1, &m_rBuf);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_rBuf);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width(), height());
+    //glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // 绑定附件在帧缓冲对象
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rBuf);
+
+    // 检查帧缓冲是否完整
+    GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
+        qDebug() << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << framebufferStatus;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);// 切换回默认缓冲中
+    //m_pTextureGrass = new QOpenGLTexture(QImage(":/images/grass.png"));
+   // m_pTextureWin = new QOpenGLTexture(QImage(":/images/blending_transparent_window.png").mirrored());
+
+    //glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);// 开启混合
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);// 选择剔除哪一个面，背面、正面、正背面GL_BACK、GL_FRONT、GL_FRONT_AND_BACK
+    //glFrontFace(GL_CCW);// 定义正逆旋转哪个为正面（GL_CW、GL_CCW）
 }
 
 void OpenglWidget::resizeGL(int w, int h)
@@ -187,28 +273,33 @@ void OpenglWidget::resizeGL(int w, int h)
 
 void OpenglWidget::paintGL()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
+    glEnable(GL_DEPTH_TEST);
+
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    bool ret = false;
 
     // 设置mvp变换矩阵
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
-    m_pShaderProgram.bind();
+    ret = m_pShaderProgram.bind();
+    if (!ret)
+        qDebug() << m_pShaderProgram.log();
     view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
     projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
     m_pShaderProgram.setUniformValue("view", view);
     m_pShaderProgram.setUniformValue("projection", projection);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     model.translate(-1.0f, 0.0f, -1.0f);
     m_pShaderProgram.setUniformValue("model", model);
     glBindVertexArray(m_wVAO);
     m_pTextureWall->bind(0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     model = QMatrix4x4();
@@ -219,12 +310,31 @@ void OpenglWidget::paintGL()
 
     glBindVertexArray(m_bVAO);
     m_pTextureBoard->bind(0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     model = QMatrix4x4();
     m_pShaderProgram.setUniformValue("model", model);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     m_pTextureBoard->release();
+    glBindVertexArray(0);
 
-    glBindVertexArray(m_gVAO);
+    // 切换到默认帧缓冲
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+    glDisable(GL_DEPTH_TEST);
+    //glPolygonMode(GL_FRONT, GL_LINE);// 切换为线框模式
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    m_pFramebufShaderProgram.bind();
+    glBindVertexArray(m_qVAO);
+    //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    m_pTextureFrameBuf->bind(0);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    m_pTextureFrameBuf->release();
+    glBindVertexArray(0);
+
+   /* glBindVertexArray(m_gVAO);
     m_pTextureWin->bind(0);
     // 按照顺序从远到近排序，因为深度测试的原因，先绘制不透明的
     for(std::map<float, QVector3D>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
@@ -234,7 +344,8 @@ void OpenglWidget::paintGL()
         m_pShaderProgram.setUniformValue("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-    m_pTextureWin->release();
+    m_pTextureWin->release();*/
+
 }
 
 void OpenglWidget::keyPressEvent(QKeyEvent *event)

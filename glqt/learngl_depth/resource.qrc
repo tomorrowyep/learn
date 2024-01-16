@@ -2,6 +2,8 @@
     <qresource prefix="/shaders">
         <file>shader.frag</file>
         <file>shader.vert</file>
+        <file>framebuf_shader.frag</file>
+        <file>framebuf_shader.vert</file>
     </qresource>
     <qresource prefix="/images">
         <file>wall.jpg</file>

@@ -6,6 +6,7 @@
 #include <QOpenGLShaderProgram>
 
 class QOpenGLTexture;
+class QOpenGLRenderbuffer;
 class QTimer;
 class QKeyEvent;
 class QMouseEvent;
@@ -31,11 +32,17 @@ private:
     unsigned int m_wVAO = 0;
     unsigned int m_bVAO = 0;
     unsigned int m_gVAO = 0;// 草的vao
+    unsigned int m_qVAO = 0;// 平面四边形的顶点
+    unsigned int m_fBufO = 0;// 帧缓冲对象
+    unsigned int m_rBuf = 0;// 渲染缓冲buf
+    unsigned int textureColorbuffer;// 颜色纹理
     QOpenGLShaderProgram m_pShaderProgram;
+    QOpenGLShaderProgram m_pFramebufShaderProgram;
     QOpenGLTexture *m_pTextureWall = nullptr;
     QOpenGLTexture *m_pTextureBoard = nullptr;
     QOpenGLTexture *m_pTextureGrass = nullptr;
     QOpenGLTexture *m_pTextureWin = nullptr;
+    QOpenGLTexture *m_pTextureFrameBuf = nullptr;
     QTimer *m_time = nullptr;
     std::map<float, QVector3D> sorted;
 
