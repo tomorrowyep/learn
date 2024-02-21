@@ -4,11 +4,19 @@
         <file>shader.vert</file>
         <file>framebuf_shader.frag</file>
         <file>framebuf_shader.vert</file>
+        <file>sky_shader.vert</file>
+        <file>sky_shader.frag</file>
     </qresource>
     <qresource prefix="/images">
         <file>wall.jpg</file>
         <file>board.png</file>
         <file>grass.png</file>
         <file>blending_transparent_window.png</file>
+        <file>skybox/right.jpg</file>
+        <file>skybox/left.jpg</file>
+        <file>skybox/top.jpg</file>
+        <file>skybox/bottom.jpg</file>
+        <file>skybox/front.jpg</file>
+        <file>skybox/back.jpg</file>
     </qresource>
 </RCC>

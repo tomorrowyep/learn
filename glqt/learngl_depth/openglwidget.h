@@ -29,22 +29,29 @@ protected:
     virtual void wheelEvent(QWheelEvent *event) override;
 
 private:
+    void loadCubeMap();
+
+private:
     unsigned int m_wVAO = 0;
     unsigned int m_bVAO = 0;
     unsigned int m_gVAO = 0;// 草的vao
     unsigned int m_qVAO = 0;// 平面四边形的顶点
     unsigned int m_fBufO = 0;// 帧缓冲对象
     unsigned int m_rBuf = 0;// 渲染缓冲buf
-    unsigned int textureColorbuffer;// 颜色纹理
+    unsigned int textureColorbuffer = 0;// 颜色纹理
+    unsigned int m_skyBoxVAO = 0;// 渲染缓冲buf
     QOpenGLShaderProgram m_pShaderProgram;
     QOpenGLShaderProgram m_pFramebufShaderProgram;
+    QOpenGLShaderProgram m_pSkyBoxShaderProgram;
     QOpenGLTexture *m_pTextureWall = nullptr;
     QOpenGLTexture *m_pTextureBoard = nullptr;
     QOpenGLTexture *m_pTextureGrass = nullptr;
     QOpenGLTexture *m_pTextureWin = nullptr;
     QOpenGLTexture *m_pTextureFrameBuf = nullptr;
+    QOpenGLTexture *m_pTexSkyBox = nullptr;
     QTimer *m_time = nullptr;
     std::map<float, QVector3D> sorted;
+    QVector<QImage> m_skyBox;
 
     // 摄像机
     QVector3D m_cameraPos{0.0, 0.0, 3.0};// 摄像机的位置

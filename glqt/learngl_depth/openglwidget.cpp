@@ -36,6 +36,14 @@ OpenglWidget::OpenglWidget(QWidget *parent) : QOpenGLWidget(parent)
          float distance = (m_cameraPos - vegetation[i]).length();
          sorted[distance] = vegetation[i];
      }
+
+     // 天空盒数据
+     m_skyBox.push_back(QImage(":/images/skybox/right.jpg").convertToFormat(QImage::Format_RGB888));
+     m_skyBox.push_back(QImage(":/images/skybox/left.jpg").convertToFormat(QImage::Format_RGB888));
+     m_skyBox.push_back(QImage(":/images/skybox/top.jpg").convertToFormat(QImage::Format_RGB888));
+     m_skyBox.push_back(QImage(":/images/skybox/bottom.jpg").convertToFormat(QImage::Format_RGB888));
+     m_skyBox.push_back(QImage(":/images/skybox/front.jpg").convertToFormat(QImage::Format_RGB888));
+     m_skyBox.push_back(QImage(":/images/skybox/back.jpg").convertToFormat(QImage::Format_RGB888));
 }
 
 OpenglWidget::~OpenglWidget()
@@ -55,49 +63,48 @@ void OpenglWidget::initializeGL()
     initializeOpenGLFunctions();
 
     // 立方体顶点数据
-    float vertices[] =
-    {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-        // Front face
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-        // Left face
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-        // Right face
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-        // Bottom face
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-        // Top face
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
     };
 
     // 地板顶点数据
@@ -135,6 +142,52 @@ void OpenglWidget::initializeGL()
         1.0f,  1.0f,  1.0f, 1.0f
     };
 
+    // 天空盒的顶点数据，绘制在立方体上的
+    float skyboxVertices[] = {
+        // positions
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
+    };
+
     glGenVertexArrays(1, &m_wVAO);
     glBindVertexArray(m_wVAO);
 
@@ -143,9 +196,9 @@ void OpenglWidget::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -191,17 +244,39 @@ void OpenglWidget::initializeGL()
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    glGenVertexArrays(1, &m_skyBoxVAO);
+    glBindVertexArray(m_skyBoxVAO);
+
+    unsigned int skyVBO;
+    glGenBuffers(1, &skyVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
 
     bool ret = false;
+    m_pSkyBoxShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/sky_shader.vert");
+    m_pSkyBoxShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/sky_shader.frag");
+    ret = m_pSkyBoxShaderProgram.link();
+    if (!ret)
+        qDebug() << m_pSkyBoxShaderProgram.log();
+    m_pSkyBoxShaderProgram.bind();
+    m_pSkyBoxShaderProgram.setUniformValue("skybox", 0);
+    loadCubeMap();
+
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
     ret = m_pShaderProgram.link();
     if (!ret)
         qDebug() << m_pShaderProgram.log();
     m_pShaderProgram.bind();
-    m_pShaderProgram.setUniformValue("texture0", 0);
+    //m_pShaderProgram.setUniformValue("texture0", 0);
+    m_pShaderProgram.setUniformValue("skybox", 0);
 
     m_pFramebufShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/framebuf_shader.vert");
     m_pFramebufShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/framebuf_shader.frag");
@@ -212,7 +287,7 @@ void OpenglWidget::initializeGL()
     m_pFramebufShaderProgram.setUniformValue("texture1", 0);
     GLenum error = glGetError();
     if (error != GL_NO_ERROR)
-        qDebug() << "OpenGL error: " << error;// 判断是否有错误
+        qDebug() << "OpenGL error0: " << error;// 判断是否有错误
 
     // 绑定帧缓冲对象
     glGenFramebuffers(1, &m_fBufO);
@@ -285,19 +360,21 @@ void OpenglWidget::paintGL()
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 view;
     QMatrix4x4 projection;
+    view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
+    projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
 
     ret = m_pShaderProgram.bind();
     if (!ret)
         qDebug() << m_pShaderProgram.log();
-    view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
-    projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
     m_pShaderProgram.setUniformValue("view", view);
     m_pShaderProgram.setUniformValue("projection", projection);
+    m_pShaderProgram.setUniformValue("cameraPos", m_cameraPos);
 
     model.translate(-1.0f, 0.0f, -1.0f);
     m_pShaderProgram.setUniformValue("model", model);
     glBindVertexArray(m_wVAO);
-    m_pTextureWall->bind(0);
+    //m_pTextureWall->bind(0);
+    m_pTexSkyBox->bind(0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -317,6 +394,19 @@ void OpenglWidget::paintGL()
     glDrawArrays(GL_TRIANGLES, 0, 6);
     m_pTextureBoard->release();
     glBindVertexArray(0);
+
+    //glDepthMask(GL_FALSE);
+    // 最后绘制可以节省一下
+    glDepthFunc(GL_LEQUAL);
+    m_pSkyBoxShaderProgram.bind();
+    m_pSkyBoxShaderProgram.setUniformValue("view", view);
+    m_pSkyBoxShaderProgram.setUniformValue("projection", projection);
+    glBindVertexArray(m_skyBoxVAO);
+    m_pTexSkyBox->bind(0);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    m_pTexSkyBox->release();
+    glDepthFunc(GL_LESS);
+    //glDepthMask(GL_TRUE);
 
     // 切换到默认帧缓冲
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
@@ -404,4 +494,28 @@ void OpenglWidget::wheelEvent(QWheelEvent *event)
 
     if (m_fov < 1) m_fov = 1;
     if (m_fov > 75) m_fov = 75;
+}
+
+void OpenglWidget::loadCubeMap()
+{
+    m_pTexSkyBox = new QOpenGLTexture(QOpenGLTexture::TargetCubeMap);
+    m_pTexSkyBox->create();
+    m_pTexSkyBox->bind(0);
+    m_pTexSkyBox->setSize(m_skyBox[0].width(), m_skyBox[0].height());
+    m_pTexSkyBox->setFormat(QOpenGLTexture::RGB8_UNorm);
+    m_pTexSkyBox->allocateStorage();
+
+    for (int i = 0; i < m_skyBox.size(); i++)
+    {
+          QOpenGLTexture::CubeMapFace currentFace = static_cast<QOpenGLTexture::CubeMapFace>(QOpenGLTexture::CubeMapPositiveX + i);
+          m_pTexSkyBox->setData(0, 0, currentFace,
+                           QOpenGLTexture::RGB, QOpenGLTexture::UInt8,
+                           (const void*)m_skyBox[i].constBits(), nullptr);
+    }
+
+
+    // 设置纹理参数
+    m_pTexSkyBox->setMagnificationFilter(QOpenGLTexture::Linear);
+    m_pTexSkyBox->setMinificationFilter(QOpenGLTexture::Linear);
+    m_pTexSkyBox->setWrapMode(QOpenGLTexture::ClampToEdge);
 }
