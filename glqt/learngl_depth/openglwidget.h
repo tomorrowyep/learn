@@ -30,8 +30,10 @@ protected:
 private:
     unsigned int m_wVAO = 0;
     unsigned int m_bVAO = 0;
+    unsigned int m_pVAO = 0;
     QOpenGLShaderProgram m_pShaderProgram;
     QOpenGLShaderProgram m_pShaderProgramStencil;
+    QOpenGLShaderProgram m_pGeomShaderProgram;
     QOpenGLTexture *m_pTextureWall = nullptr;
     QOpenGLTexture *m_pTextureBoard = nullptr;
     QTimer *m_time = nullptr;

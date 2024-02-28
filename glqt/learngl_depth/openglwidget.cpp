@@ -96,6 +96,14 @@ void OpenglWidget::initializeGL()
          5.0f, -0.5f, -5.0f,  2.0f, 2.0f
     };
 
+    float points[] =
+    {
+        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上
+        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // 右上
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // 右下
+        -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // 左下
+    };
+
     glGenVertexArrays(1, &m_wVAO);
     glBindVertexArray(m_wVAO);
 
@@ -124,6 +132,21 @@ void OpenglWidget::initializeGL()
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    // 几何着色器
+    glGenVertexArrays(1, &m_pVAO);
+    glBindVertexArray(m_pVAO);
+
+    unsigned int pVBO;
+    glGenBuffers(1, &pVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
     m_pShaderProgram.link();
@@ -131,6 +154,11 @@ void OpenglWidget::initializeGL()
     m_pShaderProgramStencil.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
     m_pShaderProgramStencil.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shaderstencil.frag");
     m_pShaderProgramStencil.link();
+
+    m_pGeomShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/geomshader.vert");
+    m_pGeomShaderProgram.addShaderFromSourceFile(QOpenGLShader::Geometry, ":/shaders/geomshader.geom");
+    m_pGeomShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/geomshader.frag");
+    m_pGeomShaderProgram.link();
 
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
@@ -151,6 +179,15 @@ void OpenglWidget::resizeGL(int w, int h)
 
 void OpenglWidget::paintGL()
 {
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // draw points
+    m_pGeomShaderProgram.bind();
+    glBindVertexArray(m_pVAO);
+    glDrawArrays(GL_POINTS, 0, 4);
+
+    /*
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -220,6 +257,7 @@ void OpenglWidget::paintGL()
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilMask(0xFF);
     glEnable(GL_DEPTH_TEST);
+    */
 }
 
 void OpenglWidget::keyPressEvent(QKeyEvent *event)
