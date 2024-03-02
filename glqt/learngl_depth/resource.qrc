@@ -6,6 +6,8 @@
         <file>geomshader.frag</file>
         <file>geomshader.geom</file>
         <file>shaderstencil.frag</file>
+        <file>instanceshader.frag</file>
+        <file>instanceshader.vert</file>
     </qresource>
     <qresource prefix="/images">
         <file>wall.jpg</file>

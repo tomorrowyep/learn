@@ -98,10 +98,21 @@ void OpenglWidget::initializeGL()
 
     float points[] =
     {
-        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上
+        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上位置 颜色
         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // 右上
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // 右下
         -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // 左下
+    };
+
+    float instanceVertices[] = {
+        // 位置          // 颜色
+        -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+         0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+        -0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+
+        -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+         0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+         0.05f,  0.05f,  0.0f, 1.0f, 1.0f
     };
 
     glGenVertexArrays(1, &m_wVAO);
@@ -147,6 +158,46 @@ void OpenglWidget::initializeGL()
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    // 实例化着色器
+    glGenVertexArrays(1, &m_instanceVAO);
+    glBindVertexArray(m_instanceVAO);
+
+    unsigned int instanceVBO;
+    glGenBuffers(1, &instanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(instanceVertices), instanceVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        //方法2，将偏移量设置为顶点属性
+    QVector2D translations[100];
+    int index = 0;
+    float offset = 0.1f;
+    for(int y = -10; y < 10; y += 2)
+    {
+        for(int x = -10; x < 10; x += 2)
+        {
+            QVector2D translation;
+            translation.setX((float)x / 10.0f + offset);
+            translation.setY((float)y / 10.0f + offset);
+            translations[index++] = translation;
+        }
+    }
+
+    unsigned int offsetsVBO;
+    glGenBuffers(1, &offsetsVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, offsetsVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(translations), translations, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribDivisor(2, 1);
+
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/shader.vert");
     m_pShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/shader.frag");
     m_pShaderProgram.link();
@@ -159,6 +210,10 @@ void OpenglWidget::initializeGL()
     m_pGeomShaderProgram.addShaderFromSourceFile(QOpenGLShader::Geometry, ":/shaders/geomshader.geom");
     m_pGeomShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/geomshader.frag");
     m_pGeomShaderProgram.link();
+
+    m_pInstanceShaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/instanceshader.vert");
+    m_pInstanceShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/instanceshader.frag");
+    m_pInstanceShaderProgram.link();
 
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
@@ -179,6 +234,7 @@ void OpenglWidget::resizeGL(int w, int h)
 
 void OpenglWidget::paintGL()
 {
+    /*几何着色器使用代码
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -186,8 +242,37 @@ void OpenglWidget::paintGL()
     m_pGeomShaderProgram.bind();
     glBindVertexArray(m_pVAO);
     glDrawArrays(GL_POINTS, 0, 4);
+    */
 
-    /*
+    /* 实例化技术的使用，主要处理大量重复的模型
+    //1、使用gl_InstanceID，有局限性，当数量很多的时候会超出uiniform数组的元素个数上限
+    QVector2D translations[100];
+    int index = 0;
+    float offset = 0.1f;
+    for(int y = -10; y < 10; y += 2)
+    {
+        for(int x = -10; x < 10; x += 2)
+        {
+            QVector2D translation;
+            translation.setX((float)x / 10.0f + offset);
+            translation.setY((float)y / 10.0f + offset);
+            translations[index++] = translation;
+        }
+    }
+    m_pInstanceShaderProgram.bind();
+    // 获取uniforms数组offsets位置
+    GLint offsetLocation = m_pInstanceShaderProgram.uniformLocation("offsets");
+    // 将translations数组的值传递给uniform数组
+    m_pInstanceShaderProgram.setUniformValueArray(offsetLocation, translations, 100);
+    glBindVertexArray(m_instanceVAO);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);*/
+
+     //2、避免方法1的局限性，使用顶点属性的方法来传递，这样能够传递的数量就完全可以支撑业务了
+     m_pInstanceShaderProgram.bind();
+     glBindVertexArray(m_instanceVAO);
+     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
+
+    /*模板测试代码
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
