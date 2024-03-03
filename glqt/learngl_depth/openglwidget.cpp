@@ -215,12 +215,44 @@ void OpenglWidget::initializeGL()
     m_pInstanceShaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/instanceshader.frag");
     m_pInstanceShaderProgram.link();
 
+    // 离屏MSAA实践
+    //绑定帧缓冲对象
+    glGenFramebuffers(1, &m_fBufO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
+
+    // 多重采样纹理附件
+    m_pTextureFrameBuf = new QOpenGLTexture(QOpenGLTexture::Target2DMultisample);
+    m_pTextureFrameBuf->create();
+    m_pTextureFrameBuf->bind(0);
+    m_pTextureFrameBuf->setFormat(QOpenGLTexture::RGBFormat);
+    m_pTextureFrameBuf->setSize(width(), height());
+    m_pTextureFrameBuf->setSamples(4);
+    m_pTextureFrameBuf->allocateStorage();
+
+    // 绑定附件在帧缓冲对象
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, m_pTextureFrameBuf->textureId(), 0);
+
+    // 多重采样渲染缓冲对象，不用于采样，只用于数据交换，会更快
+    glGenRenderbuffers(1, &m_rBuf);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_rBuf);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width(), height());
+
+    // 绑定附件在帧缓冲对象
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rBuf);
+
+    // 检查帧缓冲是否完整
+    GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
+        qDebug() << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << framebufferStatus;
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());// 切换回默认缓冲中
+
     m_pTextureWall = new QOpenGLTexture(QImage(":/images/wall.jpg").mirrored());
     m_pTextureBoard = new QOpenGLTexture(QImage(":/images/board.png").mirrored());
 
     m_pShaderProgram.bind();
     m_pShaderProgram.setUniformValue("texture", 0);
 
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -265,12 +297,13 @@ void OpenglWidget::paintGL()
     // 将translations数组的值传递给uniform数组
     m_pInstanceShaderProgram.setUniformValueArray(offsetLocation, translations, 100);
     glBindVertexArray(m_instanceVAO);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);*/
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
 
      //2、避免方法1的局限性，使用顶点属性的方法来传递，这样能够传递的数量就完全可以支撑业务了
      m_pInstanceShaderProgram.bind();
      glBindVertexArray(m_instanceVAO);
      glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
+     */
 
     /*模板测试代码
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -343,6 +376,36 @@ void OpenglWidget::paintGL()
     glStencilMask(0xFF);
     glEnable(GL_DEPTH_TEST);
     */
+
+    /* MSAA的使用代码*/
+    // MSAA抗锯齿使用，需要在创建opgl窗口时就设置MASS
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
+    glEnable(GL_DEPTH_TEST);
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // 设置mvp变换矩阵
+    QMatrix4x4 model = QMatrix4x4();
+    model.rotate(45, 0.0f, 1.0f, 0.0f);
+    QMatrix4x4 view;
+    QMatrix4x4 projection;
+
+    m_pShaderProgram.bind();
+    view.lookAt(m_cameraPos, m_cameraPos + m_cameraFront, m_up);
+    projection.perspective(m_fov, (float)width() / height(), 0.1, 100);
+    m_pShaderProgram.setUniformValue("model", model);
+    m_pShaderProgram.setUniformValue("view", view);
+    m_pShaderProgram.setUniformValue("projection", projection);
+
+    glBindVertexArray(m_wVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void OpenglWidget::keyPressEvent(QKeyEvent *event)

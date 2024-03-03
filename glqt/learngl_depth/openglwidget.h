@@ -32,12 +32,15 @@ private:
     unsigned int m_bVAO = 0;
     unsigned int m_pVAO = 0;
     unsigned int m_instanceVAO = 0;
+    unsigned int m_fBufO = 0;// 帧缓冲对象
+    unsigned int m_rBuf = 0;// 渲染缓冲buf
     QOpenGLShaderProgram m_pShaderProgram;
     QOpenGLShaderProgram m_pShaderProgramStencil;
     QOpenGLShaderProgram m_pGeomShaderProgram;
     QOpenGLShaderProgram m_pInstanceShaderProgram;
     QOpenGLTexture *m_pTextureWall = nullptr;
     QOpenGLTexture *m_pTextureBoard = nullptr;
+    QOpenGLTexture *m_pTextureFrameBuf = nullptr;
     QTimer *m_time = nullptr;
 
     // 摄像机
