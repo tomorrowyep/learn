@@ -123,10 +123,16 @@ void main()
         float diff = max(dot(Nor, normalize(-flashlight.direction)), 0.0);
         vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
 
-         // 镜面反射
-        vec3 viewDir = normalize(viewPos - FragPos);
+         // Phong着色模型镜面反射
+        /*vec3 viewDir = normalize(viewPos - FragPos);
         vec3 reflectDir = reflect(-normalize(-flashlight.direction), Nor);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoord));*/
+
+        // Blinn-Phong着色模型与Phong着色模型的区别就是高光的处理，即镜面反射部分，采用的是半程向量与法线的点成计算强度
+        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 halfwayDir = normalize(normalize(-flashlight.direction) + viewDir);
+        float spec = pow(max(dot(viewDir, halfwayDir), 0.0), material.shininess);
         vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoord));
 
         FragColor = vec4((ambient + diffuse + specular) * intensity, 1.0f);
