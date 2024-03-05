@@ -145,6 +145,21 @@ void OpenglWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // gamma校正的原因：因为显示器显示出来的颜色亮度不是完全线性的，一般是原来颜色亮度的gamma次幂，gamma约定为2.2
+    // 如果想要还原真实的颜色值，有两种方法
+    //1、设置为sRGB空间，片段着色器后会自动校正glEnable(GL_FRAMEBUFFER_SRGB);
+    //2、自己在片段着色器手动校正
+    /*
+        void main()
+        {
+            // do super fancy lighting
+            [...]
+            // apply gamma correction
+            float gamma = 2.2;
+            fragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
+        }
+    */
+    //注：一般漫反射都是在sRGB空间中，所以需要避免校正两次，镜面和法线贴图几乎则在线性空间（真实的颜色空间），另外真实空间光源强度一般为距离的2次幂
     // 设置mvp变换矩阵
     QMatrix4x4 model;
     QMatrix4x4 view;
