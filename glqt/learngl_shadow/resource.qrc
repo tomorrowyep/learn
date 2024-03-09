@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>shader.frag</file>
+        <file>shader.vert</file>
+        <file>framebufshader.frag</file>
+        <file>framebufshader.vert</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>board.png</file>
+        <file>container.png</file>
+    </qresource>
+</RCC>
