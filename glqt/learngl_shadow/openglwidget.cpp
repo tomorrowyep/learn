@@ -113,6 +113,58 @@ void OpenglWidget::resizeGL(int w, int h)
 
 void OpenglWidget::paintGL()
 {
+    /* 切线空间与法线贴图：
+     * 为什么要存在：在真实的生活中，就算是一面墙各个地方它的法向量也不是完全一样的，因此按一样的法向量渲染出来就不会那么真实；
+     * 法线贴图：为了解决这个问题，就在各个图元的法线储存在纹理中，rgb刚好对应xyz，这样会让渲染更加的真实，但是这样又会存在一个问题，法线贴图只能存储一个方向的，因此当物体位置发生变化时，此时法线信息是不正确的；
+     * 切线空间：在这样的背景下，为了纹理贴图能够适应各个位置，引出了切线空间TBN，它其实就是一个转换矩阵，将纹理中的法线转换到正确的方向，能够在更个方向通用；
+     * 求解TBN：法线向量是本来就有的，只需要求解TB，其实只需要求解任意一个即可，可以通过叉乘得到另外一个
+     * 基本原理：因为切线空间的TB轴是对应纹理坐标的UV的，因此可以从纹理坐标推出TB，这是根据矩阵的特性推导的，一个方阵的逆矩阵等于1/行列式*伴随矩阵，因此只需知道三角形的三个顶点坐标以及uv纹理坐标就可以求出TB
+     * // positions，基本已知信息
+     *  glm::vec3 pos1(-1.0,  1.0, 0.0);
+        glm::vec3 pos2(-1.0, -1.0, 0.0);
+        glm::vec3 pos3(1.0, -1.0, 0.0);
+        glm::vec3 pos4(1.0, 1.0, 0.0);
+        // texture coordinates
+        glm::vec2 uv1(0.0, 1.0);
+        glm::vec2 uv2(0.0, 0.0);
+        glm::vec2 uv3(1.0, 0.0);
+        glm::vec2 uv4(1.0, 1.0);
+        // normal vector
+        glm::vec3 nm(0.0, 0.0, 1.0);
+
+        glm::vec3 edge1 = pos2 - pos1;
+        glm::vec3 edge2 = pos3 - pos1;
+        glm::vec2 deltaUV1 = uv2 - uv1;
+        glm::vec2 deltaUV2 = uv3 - uv1;
+
+        GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent1 = glm::normalize(tangent1);// 标准化，只需要知道方向
+
+        bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent1 = glm::normalize(bitangent1);// 标准化，只需要知道方向
+     * 法线贴图的优势：可以在低图元的情况下渲染出高图元的效果，提升性能
+     * 缺点：当渲染大量的共用顶点的场景时，为了产生比较柔和的效果会平均化切线向量，导致TBN不再正交，效果会变差，可以通过再次正交来修复
+     *  vec3 T = normalize(vec3(model * vec4(tangent, 0.0)));
+        vec3 N = normalize(vec3(model * vec4(normal, 0.0)));
+        // re-orthogonalize T with respect to N
+        T = normalize(T - dot(T, N) * N);
+        // then retrieve perpendicular vector B with the cross product of T and N
+        vec3 B = cross(T, N);
+
+        mat3 TBN = mat3(T, B, N)
+     * 使用方法：
+     *  1、因为实在局部空间，需要先转到世界空间，即乘以mode，从法线贴图获取到法向量后直接乘以这个矩阵就转换到世界坐标了
+     *  normal = texture(normalMap, fs_in.TexCoords).rgb;
+        normal = normalize(normal * 2.0 - 1.0);
+        normal = normalize(fs_in.TBN * normal);
+        2、先在切线空间完成，即顶点着色器完成，这样会复杂些，但是会节省些性能，因为顶点着色器开销没有那么大
+    */
     // 阴影实现第一个阶段：将深度信息缓存到帧缓冲中
     glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
