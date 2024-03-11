@@ -159,11 +159,141 @@ void OpenglWidget::paintGL()
 
         mat3 TBN = mat3(T, B, N)
      * 使用方法：
-     *  1、因为实在局部空间，需要先转到世界空间，即乘以mode，从法线贴图获取到法向量后直接乘以这个矩阵就转换到世界坐标了
+     *  1、因为是在局部空间，需要先转到世界空间，即乘以mode，从法线贴图获取到法向量后直接乘以这个矩阵就转换到世界坐标了
      *  normal = texture(normalMap, fs_in.TexCoords).rgb;
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(fs_in.TBN * normal);
         2、先在切线空间完成，即顶点着色器完成，这样会复杂些，但是会节省些性能，因为顶点着色器开销没有那么大
+    */
+    /*视差贴图：与法线贴图配合使用，可以让物体更加真实与细节
+     * 原理：在不多消耗性能的情况下的优化技术（相比于置换），需要用到一个额外的样本，即高度贴图（一般用深度贴图）
+     * 和法线贴图一样都需要切线空间，能够保证在各个角度下都能获取到正确的值
+     * 方法：其实就是计算纹理偏移，用另一个纹理代替现在的纹理，如何计算替换的纹理就成了关键，常用三种方法求解：
+     * 1、视差贴图：比较常规的方法，就是将view向量转为单位向量后直接乘以当前纹理的高度，然后用当前纹理减去这个向量即可
+     *  缺点：就是计算的比较粗略，没有准确的求出替换纹理，导致某些角度效果不好
+     *  实现：和法线贴图共用同一个切线空间，最后的纹理也是在切线空间计算出来
+     *  顶点着色器：
+     *              #version 330 core
+                    layout (location = 0) in vec3 position;
+                    layout (location = 1) in vec3 normal;
+                    layout (location = 2) in vec2 texCoords;
+                    layout (location = 3) in vec3 tangent;
+                    layout (location = 4) in vec3 bitangent;
+
+                    out VS_OUT {
+                        vec3 FragPos;
+                        vec2 TexCoords;
+                        vec3 TangentLightPos;
+                        vec3 TangentViewPos;
+                        vec3 TangentFragPos;
+                    } vs_out;
+
+                    uniform mat4 projection;
+                    uniform mat4 view;
+                    uniform mat4 model;
+
+                    uniform vec3 lightPos;
+                    uniform vec3 viewPos;
+
+                    void main()
+                    {
+                        gl_Position      = projection * view * model * vec4(position, 1.0f);
+                        vs_out.FragPos   = vec3(model * vec4(position, 1.0));
+                        vs_out.TexCoords = texCoords;
+
+                        vec3 T   = normalize(mat3(model) * tangent);
+                        vec3 B   = normalize(mat3(model) * bitangent);
+                        vec3 N   = normalize(mat3(model) * normal);
+                        mat3 TBN = transpose(mat3(T, B, N));
+
+                        vs_out.TangentLightPos = TBN * lightPos;
+                        vs_out.TangentViewPos  = TBN * viewPos;
+                        vs_out.TangentFragPos  = TBN * vs_out.FragPos;
+                    }
+     *  片段着色器：
+     *              #version 330 core
+                    out vec4 FragColor;
+
+                    in VS_OUT {
+                        vec3 FragPos;
+                        vec2 TexCoords;
+                        vec3 TangentLightPos;
+                        vec3 TangentViewPos;
+                        vec3 TangentFragPos;
+                    } fs_in;
+
+                    uniform sampler2D diffuseMap;
+                    uniform sampler2D normalMap;
+                    uniform sampler2D depthMap;
+
+                    uniform float height_scale;
+
+                    vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+                    {
+                        float height =  texture(depthMap, texCoords).r;
+                        vec2 p = viewDir.xy / viewDir.z * (height * height_scale);// 与深度有个比列，这样能够更准确的计算偏移
+                        return texCoords - p;
+                    }
+
+                    void main()
+                    {
+                        // Offset texture coordinates with Parallax Mapping
+                        vec3 viewDir   = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+                        vec2 texCoords = ParallaxMapping(fs_in.TexCoords,  viewDir);// 切线空间
+
+                        // then sample textures with new texture coords
+                        vec3 diffuse = texture(diffuseMap, texCoords);
+                        vec3 normal  = texture(normalMap, texCoords);
+                        normal = normalize(normal * 2.0 - 1.0);
+                        // proceed with lighting code
+                        [...]
+                    }
+     * 2、陡峭视差映射
+     * 原理：分层来计算求偏移纹理，一般层数越多效果越好，会比视差贴图获取到更加准确的偏移纹理
+     * 缺点：面对一些场景（本来就陡峭的场景）会出现断层或者锯齿，因为顶点数量限制
+     * 方法：就多了一些内容
+     *      vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+            {
+                // number of depth layers
+                const float numLayers = 10;
+                // calculate the size of each layer
+                float layerDepth = 1.0 / numLayers;
+                // depth of current layer
+                float currentLayerDepth = 0.0;
+                // the amount to shift the texture coordinates per layer (from vector P)
+                vec2 P = viewDir.xy * height_scale;
+                vec2 deltaTexCoords = P / numLayers;// 每个层相距的平均值
+
+                vec2  currentTexCoords     = texCoords;
+                float currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+
+                while(currentLayerDepth < currentDepthMapValue)
+                {
+                    // shift texture coordinates along direction of P
+                    currentTexCoords -= deltaTexCoords;
+                    // get depthmap value at current texture coordinates
+                    currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+                    // get depth of next layer
+                    currentLayerDepth += layerDepth;
+                }
+
+                return currentTexCoords;
+            }
+     * 3、视差遮蔽映射(Parallax Occlusion Mapping)
+     * 原理：在陡峭视差映射基础上，获取到第一个合适的深度值时，不直接使用，在该点与上一个点之间进行插值获取更准确的值，这样会得到更加精确的视差纹理了
+     * 方法：在获取到陡峭视差映射之后
+     *      // get texture coordinates before collision (reverse operations)
+            vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+            // get depth after and before collision for linear interpolation
+            float afterDepth  = currentDepthMapValue - currentLayerDepth;
+            float beforeDepth = texture(depthMap, prevTexCoords).r - currentLayerDepth + layerDepth;
+
+            // interpolation of texture coordinates
+            float weight = afterDepth / (afterDepth - beforeDepth);
+            vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+            return finalTexCoords;
     */
     // 阴影实现第一个阶段：将深度信息缓存到帧缓冲中
     glBindFramebuffer(GL_FRAMEBUFFER, m_fBufO);
