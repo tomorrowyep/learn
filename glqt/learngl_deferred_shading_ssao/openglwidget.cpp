@@ -169,7 +169,7 @@ void OpenglWidget::initializeGL()
     m_pSSAOShader.bind();
     m_pSSAOShader.setUniformValue("gPositionDepth", 0);
     m_pSSAOShader.setUniformValue("gNormal", 1);
-    m_pSSAOShader.setUniformValue("texNoise", 3);
+    m_pSSAOShader.setUniformValue("texNoise", 2);
 
     m_pSSAOBlurShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/ssaoblurshader.vert");
     m_pSSAOBlurShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/ssaoblurshader.frag");

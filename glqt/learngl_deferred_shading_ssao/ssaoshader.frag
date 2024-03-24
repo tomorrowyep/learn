@@ -42,13 +42,13 @@ void main()
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
 
         // get sample depth
-        float sampleDepth = -texture(gPositionDepth, offset.xy).w; // Get depth value of kernel sample
+        float sampleDepth = texture(gPositionDepth, offset.xy).w; // 这里取负数是因为在观察空间，深度值都是负数
 
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth ));
         occlusion += (sampleDepth >= sample.z ? 1.0 : 0.0) * rangeCheck;
     }
-    occlusion = 1.0 - (occlusion / kernelSize);
+    occlusion = 1.0 - (occlusion / kernelSize);// 遮挡因子越高，则环境光占比越小
 
     FragColor = occlusion;
 }

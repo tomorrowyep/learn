@@ -4,7 +4,7 @@ in vec2 TexCoords;
 out float fragColor;
 
 uniform sampler2D ssaoInput;
-const int blurSize = 4; // use size of noise texture (4x4)
+const int blurSize = 4; // 去除随机噪声纹理产生的影响，直接对周围的纹理平均化，达到模糊的效果
 
 void main()
 {
