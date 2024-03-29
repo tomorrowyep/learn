@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>cubemapshader.frag</file>
+        <file>cubemapshader.vert</file>
+        <file>pbrshader.frag</file>
+        <file>pbrshader.vert</file>
+        <file>backgroundshader.frag</file>
+        <file>backgroundshader.vert</file>
+        <file>irradianceshader.frag</file>
+        <file>irradianceshader.vert</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>cloudy.hdr</file>
+    </qresource>
+</RCC>
