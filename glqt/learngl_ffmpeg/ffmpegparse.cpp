@@ -149,6 +149,138 @@ void FfmpegParse::readAudio()
     return;
 }
 
+void FfmpegParse::pushVideoStream()
+{
+    // 该函数即将废弃，主要是兼容旧版旧版 GnuTLS 或 OpenSSL 库的线程安全问题
+    // avformat_network_init();
+    const char *rtmpURL = "rtmp://your-server-address/app/streamkey"; // RTMP 推流地址
+    const int width = 1280; // 视频宽度
+    const int height = 720; // 视频高度
+    const int fps = 30; // 帧率
+
+    // 常见的协议支持
+    /*
+     * avformat_alloc_output_context2(&outputContext, NULL, "mp4", "output.mp4"); // 输出到本地文件
+     * avformat_alloc_output_context2(&outputContext, NULL, "flv", "rtmp://your-server-address/app/streamkey");
+     * avformat_alloc_output_context2(&outputContext, NULL, "mpegts", "udp://127.0.0.1:1234");
+     * avformat_alloc_output_context2(&outputContext, NULL, "matroska", "output.mkv");
+     * avformat_alloc_output_context2(&outputContext, NULL, "avi", "output.avi");
+     * avformat_alloc_output_context2(&outputContext, NULL, "mov", "output.mov");
+     * avformat_alloc_output_context2(&outputContext, NULL, "webm", "output.webm");
+     * avformat_alloc_output_context2(&outputContext, NULL, "ogg", "output.ogg");
+     * avformat_alloc_output_context2(&outputContext, NULL, "wav", "output.wav");
+     * avformat_alloc_output_context2(&outputContext, NULL, "mp3", "output.mp3");
+     * avformat_alloc_output_context2(&outputContext, NULL, "rtp", "rtp://127.0.0.1:1234");
+     * avformat_alloc_output_context2(&outputContext, NULL, "hls", "http://localhost/live/stream.m3u8");
+     * avformat_alloc_output_context2(&outputContext, NULL, "dash", "http://localhost/live/manifest.mpd");
+     * avformat_alloc_output_context2(&outputContext, NULL, "asf", "output.asf");
+    */
+
+
+    // 设置输出上下文
+    AVFormatContext *outputContext = NULL;
+    avformat_alloc_output_context2(&outputContext, NULL, "flv", rtmpURL);
+    if (!outputContext)
+        return;
+
+    // 查找对应的编码器
+    const AVCodec *pCodec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    if (!pCodec)
+        return;
+
+    // 创建并初始化编码器上下文
+    AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
+    pCodecContext->codec_id = pCodec->id;
+    pCodecContext->bit_rate = 400000; // 比特率
+    pCodecContext->width = width;
+    pCodecContext->height = height;
+    pCodecContext->time_base = (AVRational){1, fps};
+    pCodecContext->framerate = (AVRational){fps, 1};
+    pCodecContext->gop_size = 10; // I 帧间隔
+    pCodecContext->max_b_frames = 1;
+    pCodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+
+    // 打开编码器
+    if (avcodec_open2(pCodecContext, pCodec, NULL) < 0)
+        return ;
+
+    // 创建视频流
+    AVStream *video_stream = avformat_new_stream(outputContext, pCodec);
+    if (!video_stream)
+        return;
+
+    video_stream->time_base = (AVRational){1, fps};
+    video_stream->codecpar->codec_id = AV_CODEC_ID_H264;
+    video_stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+    video_stream->codecpar->width = width;
+    video_stream->codecpar->height = height;
+    video_stream->codecpar->format = AV_PIX_FMT_YUV420P;
+
+    // 打开 RTMP 地址,先判断时候需要打开文件流
+    if (!(outputContext->oformat->flags & AVFMT_NOFILE))
+    {
+        if (avio_open(&outputContext->pb, rtmpURL, AVIO_FLAG_WRITE) < 0)
+            return;
+    }
+
+    // 写入流头信息
+    if (avformat_write_header(outputContext, NULL) < 0)
+        return;
+
+    // 创建帧对象
+    AVFrame *frame = av_frame_alloc();
+    frame->format = AV_PIX_FMT_YUV420P;
+    frame->width = width;
+    frame->height = height;
+
+    if (av_image_alloc(frame->data, frame->linesize, width, height, AV_PIX_FMT_YUV420P, 32) < 0)
+        return;
+
+    // 写入实际的数据, 编码并推流
+    AVPacket *pkt = av_packet_alloc();
+    for (int i = 0; i < 500; i++)
+    { // 假设推送 500 帧
+
+        fflush(stdout);
+
+        // 模拟生成 YUV420 数据 (这里应替换为实际 YUV 数据的填充)
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                frame->data[0][y * frame->linesize[0] + x] = x + y + i * 3;  // Y
+            }
+        }
+        for (int y = 0; y < height / 2; y++) {
+            for (int x = 0; x < width / 2; x++) {
+                frame->data[1][y * frame->linesize[1] + x] = 128 + y + i * 2;  // U
+                frame->data[2][y * frame->linesize[2] + x] = 64 + x + i * 5;   // V
+            }
+        }
+
+        frame->pts = i; // 设置帧的 PTS 值
+        int ret = avcodec_send_frame(pCodecContext, frame);
+        if (ret < 0)
+            return;
+
+        ret = avcodec_receive_packet(pCodecContext, pkt);
+        if (ret == 0)
+        {
+            // 写入已编码的帧
+            av_interleaved_write_frame(outputContext, pkt);
+            av_packet_unref(pkt);
+        }
+    }
+
+    // 结束推流，写入流尾信息
+    av_write_trailer(outputContext);
+
+    // 释放资源
+    avcodec_free_context(&pCodecContext);
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
+    avio_closep(&outputContext->pb);
+    avformat_free_context(outputContext);
+}
+
 int FfmpegParse::getSampleRate()
 {
     if (!m_audioCodecContext)

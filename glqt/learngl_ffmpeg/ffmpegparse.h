@@ -32,7 +32,7 @@ public:
     FfmpegParse(const std::wstring path);
     ~FfmpegParse();
 
-     bool initVideoInfo();
+    bool initVideoInfo();
 
     // 打开本地文件，可能包含中文
     bool openLocalFile();
@@ -49,6 +49,9 @@ public:
 
     // 获取音频信息
     void readAudio();
+
+    // 推流视频
+    void pushVideoStream();
 
     int getSampleRate();
     int getchannels();
