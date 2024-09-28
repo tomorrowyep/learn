@@ -32,7 +32,12 @@ public:
     virtual void run() override;
 
 private:
+    // 仅判断是否支持cuda硬解
+    bool isSupportHardwareDecode(AVCodecParameters* paras);
+
+private:
     AVCodecContext* m_codeCtx = nullptr;
+    AVPixelFormat m_hw_pix_fmt = AV_PIX_FMT_NONE;// 判断是否是硬解
 
     AvPacketQueue* m_pPacketQue = nullptr;
     AvFrameQueue* m_frameQue = nullptr;

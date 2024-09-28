@@ -290,6 +290,7 @@ bool AudioPlayerManager::reSample(const AVFrame* frame)
     }
 
     m_bufferSize = av_samples_get_buffer_size(nullptr, m_outputParas.channels, realSamples, m_outputParas.fmt, 1);
+
     // 处理噪音
     highPassFIRFilterStereo(m_audioBuffer, m_bufferSize);
     lowPassFIRFilterStereo(m_audioBuffer, m_bufferSize);

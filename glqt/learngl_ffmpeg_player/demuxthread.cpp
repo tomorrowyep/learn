@@ -104,7 +104,7 @@ void DemuxThread::run()
         }*/
 
         // packet采用引用计数时，只有当计数为零才释放，av_read_frame会增加计数
-        // push接口采用的是数据移动，因此不能在这里释放
+        // push接口采用的是数据移动，因此不用在这里释放
         if (av_read_frame(m_pFormatCtx, &packet) == 0)
         {
             if (packet.stream_index == m_nVideoStreamIndex)

@@ -54,7 +54,7 @@ private:
     double m_pts = 0.;
 
     SwrContext* m_swrCtx = nullptr;
-    uint8_t* m_audioBuffer = nullptr;// 音频缓冲区，存储从视频帧获取的大小
+    uint8_t* m_audioBuffer = nullptr;// 音频缓冲区，存储从音频帧转换后的大小
     size_t m_bufferSize = 0;
     size_t m_curIndex = 0; // 表示m_audioBuffer未写入音频缓冲区的起始位置
 
