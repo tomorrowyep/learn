@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.2, 2024-09-28T16:56:23. -->
+<!-- Written by QtCreator 4.12.2, 2024-10-24T23:01:11. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -308,8 +308,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:E:/yt/data/opgl/glqt/learngl_ffmpeg_player/learngl_ffmpeg_player.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">E:/yt/data/opgl/glqt/learngl_ffmpeg_player/learngl_ffmpeg_player.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">learngl_ffmpeg_player2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:E:/yt/data/opgl/player/learngl_ffmpeg_player.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">E:/yt/data/opgl/player/learngl_ffmpeg_player.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
