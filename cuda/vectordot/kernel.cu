@@ -210,4 +210,13 @@ int main()
     }
 
     std::cout << result << "\n";
+
+    // 释放内存
+    cudaFree(dx);
+    cudaFree(dy);
+    cudaFree(dz);
+    cudaFree(d);
+
+    delete[] hx;
+    delete[] hy;
 }
