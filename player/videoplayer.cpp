@@ -11,6 +11,7 @@
 #include <QAudioOutput>
 #include <QIODevice>
 #include <QFile>
+#include <QResizeEvent>
 
 constexpr int g_interval = 10;// 10ms触发一次刷新
 
@@ -23,8 +24,10 @@ VideoPlayer::VideoPlayer(QWidget *parent)
 
 VideoPlayer::~VideoPlayer()
 {
-    av_frame_free(&m_rgbFrame);
-    av_free(m_pRgbBuffer);
+    if (m_rgbFrame)
+        av_frame_free(&m_rgbFrame);
+    if (m_pRgbBuffer)
+        av_free(m_pRgbBuffer);
 
     makeCurrent();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -65,7 +68,7 @@ void VideoPlayer::resizeGL(int w, int h)
 
 void VideoPlayer::paintGL()
 {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     m_pShaderProgram.bind();
@@ -78,6 +81,15 @@ void VideoPlayer::paintGL()
     renderVideo();
 }
 
+void VideoPlayer::resizeEvent(QResizeEvent *event)
+{
+    m_dstWidth = event->size().width();
+    m_dstHeight = event->size().height();
+    allocateRgbBuf();
+
+    QOpenGLWidget::resizeEvent(event);
+}
+
 void VideoPlayer::initVedio(AvSync* sync, AVRational timeBase, AvFrameQueue* pFrameQue, int width, int height)
 {
     m_width = width;
@@ -85,6 +97,9 @@ void VideoPlayer::initVedio(AvSync* sync, AVRational timeBase, AvFrameQueue* pFr
     m_pFrameQue = pFrameQue;
     m_avSync = sync;
     m_timeBase = timeBase;
+
+    m_dstWidth = this->width();
+    m_dstHeight = this->height();
     allocateRgbBuf();
 
     m_time = new QTimer(this);
@@ -174,8 +189,8 @@ QImage VideoPlayer::yuv2RGB(const AVFrame* frame)
         return QImage();
 
     m_swsCtx = sws_getContext(m_width, m_height, (AVPixelFormat)frame->format, // 原图像的宽高以及格式
-                              m_width, m_height, AV_PIX_FMT_RGB24, // 输出（转换后）图像的宽高以及格式
-                              SWS_FAST_BILINEAR, // 缩放算法
+                              m_dstWidth, m_dstHeight, AV_PIX_FMT_RGB24, // 输出（转换后）图像的宽高以及格式
+                              SWS_BICUBIC, // 缩放算法
                               nullptr, nullptr, nullptr); // 原图像过滤方式以及输出图像过滤方式、过滤的附加参数
     if (!m_swsCtx)
         return QImage();
@@ -193,26 +208,34 @@ QImage VideoPlayer::yuv2RGB(const AVFrame* frame)
 
     // 将RGB数据转为QImage并显示
     return QImage (m_rgbFrame->data[0],
-            m_width,
-            m_height,
+            m_dstWidth,
+            m_dstHeight,
             m_rgbFrame->linesize[0],
-            QImage::Format_RGB888);
+            QImage::Format_RGB888).copy();
 }
 
 bool VideoPlayer::allocateRgbBuf()
 {
-    int bufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGB24, m_width, m_height, 32);
+    if (m_pRgbBuffer)
+    {
+        av_free(m_pRgbBuffer);
+        m_pRgbBuffer = nullptr;
+    }
+
+    if (!m_rgbFrame)
+        m_rgbFrame = av_frame_alloc();
+
+    int bufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGB24, m_dstWidth, m_dstHeight, 32);
     if (bufferSize < 0)
         return false;
 
     // 分配合适大小的空间
-    m_rgbFrame = av_frame_alloc();
     m_pRgbBuffer = static_cast<uint8_t*>(av_malloc(bufferSize));
     if (m_pRgbBuffer == nullptr)
         return false;
 
     // 将缓冲区数据填充到 data 和 linesize 数组中，初始化m_pFrameRGB
-    int ret = av_image_fill_arrays(m_rgbFrame->data, m_rgbFrame->linesize, m_pRgbBuffer, AV_PIX_FMT_RGB24, m_width, m_height, 32);
+    int ret = av_image_fill_arrays(m_rgbFrame->data, m_rgbFrame->linesize, m_pRgbBuffer, AV_PIX_FMT_RGB24,  m_dstWidth, m_dstHeight, 32);
     if (ret < 0)
         return false;
 

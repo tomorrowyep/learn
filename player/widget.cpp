@@ -24,7 +24,19 @@ Widget::Widget(QWidget *parent)
 
 Widget::~Widget()
 {
+    if (m_audioPlayer)
+        m_audioPlayer->stop();
+    if (m_demuxThread)
+        m_demuxThread->stop();
+    if (m_audioDecodeThread)
+        m_audioDecodeThread->stop();
+    if (m_vedioDecodeThread)
+        m_vedioDecodeThread->stop();
 
+    delete m_vedioFrameQue;
+    delete m_audioFrameQue;
+    delete m_vedioPacketQue;
+    delete m_audioPacketQue;
 }
 
 void Widget::initPlayer()

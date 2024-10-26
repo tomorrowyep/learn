@@ -97,11 +97,11 @@ void DemuxThread::run()
     while (!m_abort)
     {
         // 避免数据量太大
-        /*if (m_pVideoPacketQueue->size() > 100 ||  m_pAudioPacketQueue->size() > 100)
+        if (m_pVideoPacketQueue->size() > 100 ||  m_pAudioPacketQueue->size() > 100)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
-        }*/
+        }
 
         // packet采用引用计数时，只有当计数为零才释放，av_read_frame会增加计数
         // push接口采用的是数据移动，因此不用在这里释放

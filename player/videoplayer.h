@@ -28,6 +28,8 @@ protected:
     virtual void resizeGL(int w, int h) override;
     virtual void paintGL() override;
 
+    virtual void resizeEvent(QResizeEvent *event) override;
+
 private:
     // 视频处理
     void renderVideo();
@@ -48,6 +50,8 @@ private:
 
     int m_width = 0;
     int m_height = 0;
+    int m_dstWidth = 0;
+    int m_dstHeight = 0;
 
     SwsContext* m_swsCtx = nullptr;
     AvFrameQueue* m_pFrameQue = nullptr;
