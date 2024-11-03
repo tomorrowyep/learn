@@ -52,6 +52,7 @@ bool DecodeThread::init(AVCodecParameters* paras)
 
 int DecodeThread::start()
 {
+    m_abort = false;
     m_thread = new std::thread(&DecodeThread::run, this);
     if (!m_thread)
         return -1;

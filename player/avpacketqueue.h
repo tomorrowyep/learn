@@ -30,8 +30,7 @@ public:
     void push(AVPacket *packet = nullptr);
     AVPacket* pop(const int timeout);
 
-private:
-     void release();
+    void release();
 
 private:
     MultiMediaQueue<AVPacket*> m_avPacketQue;

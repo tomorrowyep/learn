@@ -68,6 +68,9 @@ void VideoPlayer::resizeGL(int w, int h)
 
 void VideoPlayer::paintGL()
 {
+    if (m_stop)
+        return;
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -110,6 +113,16 @@ void VideoPlayer::initVedio(AvSync* sync, AVRational timeBase, AvFrameQueue* pFr
     });
 }
 
+void VideoPlayer::start()
+{
+    m_stop = false;
+}
+
+void VideoPlayer::stop()
+{
+    m_stop = true;
+}
+
 void VideoPlayer::renderVideo()
 {
     AVFrame* frame = m_pFrameQue->front();
@@ -118,6 +131,8 @@ void VideoPlayer::renderVideo()
 
     double pts = frame->pts * av_q2d(m_timeBase);
     double audioPts =  m_avSync->getClock();
+    emit updateSLide(audioPts);// 更新进度条
+
     double diff = (pts - audioPts) * 1000;// s -> ms
     if (diff > 0)
     {

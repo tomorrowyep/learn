@@ -22,6 +22,8 @@ public:
     ~VideoPlayer();
 
     void initVedio(AvSync* sync, AVRational timeBase, AvFrameQueue* pFrameQue, int width, int height);
+    void start();
+    void stop();
 
 protected:
     virtual void initializeGL() override;
@@ -29,6 +31,9 @@ protected:
     virtual void paintGL() override;
 
     virtual void resizeEvent(QResizeEvent *event) override;
+
+signals:
+    void updateSLide(double pts);
 
 private:
     // 视频处理
@@ -44,6 +49,7 @@ private:
     QTimer *m_time = nullptr;
     QImage m_image;// 存储上一帧的画面，当视频快的时候渲染上一帧，不然会导致画面闪烁
     bool m_isRenderLastImg = false;
+    bool m_stop = false;
 
     AvSync* m_avSync = nullptr;
     AVRational m_timeBase;

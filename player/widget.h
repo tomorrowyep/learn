@@ -11,6 +11,7 @@ class AvFrameQueue;
 class DemuxThread;
 class DecodeThread;
 class AudioPlayerManager;
+class QSlider;
 
 class Widget : public QWidget
 {
@@ -22,7 +23,13 @@ public:
 
     void initPlayer();
 
+private slots:
+    void updateVideoSchedule(int);
+
 private:
+    // 进度条
+    QSlider* m_slider = nullptr;
+    int m_lastPts = 0;
     // 缓存队列
     AvPacketQueue* m_audioPacketQue = nullptr;
     AvPacketQueue* m_vedioPacketQue = nullptr;

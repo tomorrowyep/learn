@@ -31,11 +31,15 @@ public:
     int start();
     int stop();
 
+    double getTotalDuration();
+
     AVCodecParameters* getVedioCodecParameters();
     AVCodecParameters* getAudioCodecParameters();
 
     AVRational getVedioStreamTimebase();
     AVRational getAudioStreamTimebase();
+
+    void updateSchedule(int pts);
 
     virtual void run() override;
 

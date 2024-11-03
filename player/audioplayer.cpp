@@ -153,6 +153,7 @@ void AudioPlayerManager::init()
 
 int AudioPlayerManager::start()
 {
+    m_abort = false;
     m_thread = new std::thread(&AudioPlayerManager::run, this);
     if (!m_thread)
         return -1;
@@ -198,7 +199,6 @@ void AudioPlayerManager::playAudio()
         if (!frame)
         {
             // 没有数据或者暂停了
-            m_abort = true;
             return;
         }
 

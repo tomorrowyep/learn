@@ -46,6 +46,7 @@ bool DemuxThread::init(const std::wstring mediaUrl)
 
 int DemuxThread::start()
 {
+    m_abort = false;
     m_thread = new std::thread(&DemuxThread::run, this);
     if (!m_thread)
         return -1;
@@ -57,6 +58,11 @@ int DemuxThread::stop()
 {
     MultipleMediaThread::stop();
     return 0;
+}
+
+double DemuxThread::getTotalDuration()
+{
+    return (double)m_pFormatCtx->duration / (double)AV_TIME_BASE;
 }
 
 AVCodecParameters *DemuxThread::getVedioCodecParameters()
@@ -89,6 +95,11 @@ AVRational DemuxThread::getAudioStreamTimebase()
         return {};
 
     return m_pFormatCtx->streams[m_nAudioStreamIndex]->time_base;
+}
+
+void DemuxThread::updateSchedule(int pts)
+{
+    av_seek_frame(m_pFormatCtx, -1, pts * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
 }
 
 void DemuxThread::run()

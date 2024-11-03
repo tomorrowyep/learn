@@ -33,8 +33,7 @@ public:
     AVFrame* pop(const int timeout);
     AVFrame* front();
 
-private:
-     void release();
+    void release();
 
 private:
     MultiMediaQueue<AVFrame*> m_frameQue;
