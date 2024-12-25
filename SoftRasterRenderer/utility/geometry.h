@@ -380,7 +380,7 @@ public:
 		return ret;
 	}
 
-	// Äæ¾ØÕó
+	// Äæ¾ØÕóÔÙ×ªÖÃ
 	mat<ROWS, COLS, T> invert_transpose()
 	{
 		assert(ROWS == COLS);
@@ -390,6 +390,7 @@ public:
 		return ret / tmp;
 	}
 
+	// Äæ¾ØÕó
 	mat<ROWS, COLS, T> invert() const
 	{
 		assert(ROWS == COLS);

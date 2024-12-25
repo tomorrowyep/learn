@@ -3,6 +3,7 @@
 #include "raytraceengine.h"
 #include "common.h"
 #include "iobject.h"
+#include "objadapt.h"
 #include "scenemanager.h"
 
 #include <random>
@@ -70,9 +71,14 @@ void RayTraceEngine::setDevice(TGAImage* device)
 	m_pDevice = device;
 }
 
-void RayTraceEngine::addObj(IObject* pScene)
+IObject* RayTraceEngine::createObj(const Vec3f* pos)
 {
-	m_pSceneManager->addObj(pScene);
+	return ObjAdapt::createObj(pos);
+}
+
+void RayTraceEngine::addObj(IObject* obj)
+{
+	m_pSceneManager->addObj(obj);
 }
 
 void RayTraceEngine::setMaxDepth(int depth)
@@ -142,25 +148,25 @@ void RayTraceEngine::rayGeneration(const ExecutexType type)
 
 				// 生成光线
 				Ray ray;
-				ray.startPoint = m_pSceneManager->transform2World(projPos);
+				ray.startPoint = m_pSceneManager->projTransform2World(projPos);
 				ray.direction = Vec3f(ray.startPoint - cameraPos).normalize();
 
 				// 求交点
-				//HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
-				HitResult hitRes = m_pSceneManager->closestHit(ray);
-				Vec3f color; // 范围0-1
+				HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
+				//HitResult hitRes = m_pSceneManager->closestHit(ray);
+				TGAColor tgaColor;
 				if (hitRes.isHit)
 				{
 					// 命中光源直接返回光源颜色
 					if (hitRes.material.isEmissive)
 					{
-						color = hitRes.material.color;
+						tgaColor = hitRes.material.color;
 					}
 					else
 					{
 						Ray randomRay;
 						randomRay.startPoint = hitRes.hitPoint;
-						randomRay.direction = RenderEngine::randomDirection(hitRes.material.normal);
+						randomRay.direction = RenderEngine::randomDirection(hitRes.material.normal).normalize();
 
 						// 根据反射率决定光线最终的方向
 						float r = RenderEngine::randf();
@@ -169,27 +175,27 @@ void RayTraceEngine::rayGeneration(const ExecutexType type)
 							// 镜面反射
 							Vec3f ref = RenderEngine::reflect(hitRes.material.normal, ray.direction).normalize();
 							randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.roughness);
-							color = m_pSceneManager->pathTracing(randomRay, 0);
+							tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 						}
 						else if (hitRes.material.specularRate <= r && r <= hitRes.material.refractRate)
 						{
 							// 折射
 							Vec3f ref = RenderEngine::refract(ray.direction, hitRes.material.normal, hitRes.material.refractAngle).normalize();
 							randomRay.direction = RenderEngine::mix(ref, randomRay.direction * -1, hitRes.material.refractRoughness);
-							color = m_pSceneManager->pathTracing(randomRay, 0);
+							tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 						}
 						else
 						{
 							// 漫反射
-							Vec3f srcColor = m_pSceneManager->getTexture("diffuse", hitRes.material.texCoords);
-							Vec3f ptColor = m_pSceneManager->pathTracing(randomRay, 0);
-							color = multiply_elements(ptColor, srcColor); // 和原颜色混合
+							tgaColor = m_pSceneManager->getTGATexture("diffuse", hitRes.material.texCoords);
+							TGAColor ptColor = m_pSceneManager->pathTracing(randomRay, 0);
+							tgaColor = ptColor * tgaColor; // 和原颜色混合
 						}
-						color = color * m_sampleWeight;
+						tgaColor = tgaColor * m_sampleWeight;
 					}
 				}
 
-				m_pDevice->set(col, row, m_pDevice->get(col, row) + color);
+				m_pDevice->set(col, row, m_pDevice->get(col, row) + tgaColor);
 			}
 		}
 	}
@@ -236,19 +242,18 @@ void RayTraceEngine::_syncRayGeneration()
 
 							// 生成光线
 							Ray ray;
-							ray.startPoint = m_pSceneManager->transform2World(projPos);
+							ray.startPoint = m_pSceneManager->projTransform2World(projPos);
 							ray.direction = Vec3f(ray.startPoint - cameraPos).normalize();
 
 							// 求交点
-							//HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
-							HitResult hitRes = m_pSceneManager->closestHit(ray);
-							Vec3f color; // 范围0-1
+							HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
+							//HitResult hitRes = m_pSceneManager->closestHit(ray);
 							TGAColor tgaColor;
 							if (hitRes.isHit)
 							{
 								if (hitRes.material.isEmissive)
 								{
-									color = hitRes.material.color;
+									tgaColor = hitRes.material.color;
 								}
 								else
 								{
@@ -261,29 +266,26 @@ void RayTraceEngine::_syncRayGeneration()
 									{
 										Vec3f ref = RenderEngine::reflect(hitRes.material.normal, ray.direction).normalize();
 										randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.roughness);
-										color = m_pSceneManager->pathTracing(randomRay, 0);
+										tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 									}
 									else if (hitRes.material.specularRate <= r && r <= hitRes.material.refractRate)
 									{
 										Vec3f ref = RenderEngine::refract(ray.direction, hitRes.material.normal, hitRes.material.refractAngle).normalize();
 										randomRay.direction = RenderEngine::mix(ref, randomRay.direction * -1, hitRes.material.refractRoughness);
-										color = m_pSceneManager->pathTracing(randomRay, 0);
+										tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 									}
 									else
 									{
 										// 漫反射
 										tgaColor = m_pSceneManager->getTGATexture("diffuse", hitRes.material.texCoords);
-
-										//Vec3f srcColor = m_pSceneManager->getTexture("diffuse", hitRes.material.texCoords);
-										//Vec3f ptColor = m_pSceneManager->pathTracing(randomRay, 0);
-										//color = multiply_elements(ptColor, srcColor);
+										TGAColor ptColor = m_pSceneManager->pathTracing(randomRay, 0);
+										tgaColor = ptColor * tgaColor; // 和原颜色混合
 									}
-									color = color * m_sampleWeight;
+									tgaColor = tgaColor * m_sampleWeight;
 								}
 							}
 
-							//m_pDevice->set(col, row, m_pDevice->get(col, row) + color);
-							m_pDevice->set(col, row, tgaColor);
+							m_pDevice->set(col, row, m_pDevice->get(col, row) + tgaColor);
 						}
 					}
 				}

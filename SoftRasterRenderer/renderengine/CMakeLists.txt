@@ -12,6 +12,7 @@ set(SOURCE_FILES
     ./irenderengine.cpp
     ./rasterengine/rasterengine.cpp
 
+    ./raytraceengine/objadapt.cpp
     ./raytraceengine/triangleobj.cpp
     ./raytraceengine/scenemanager.cpp
     ./raytraceengine/raytraceengine.cpp
@@ -23,7 +24,8 @@ set(HEADER_FILES
     ./include/irenderengine.h
     ./rasterengine/rasterengine.h
 
-    ./include/triangleobj.h
+    ./raytraceengine/objadapt.h
+    ./raytraceengine/triangleobj.h
     ./raytraceengine/scenemanager.h
     ./raytraceengine/raytraceengine.h
 )

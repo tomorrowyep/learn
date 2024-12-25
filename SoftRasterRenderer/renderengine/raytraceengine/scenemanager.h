@@ -28,10 +28,9 @@ public:
 
 	Matrix getViewportMatrix();
 
-	Vec3f getTexture(const std::string& texName, const Vec2f& uv);
 	TGAColor getTGATexture(const std::string& texName, const Vec2f& uv);
 
-	Vec3f transform2World(const Vec4f& clipPos);
+	Vec3f projTransform2World(const Vec4f& clipPos);
 
 	void buildBVH(int count);
 
@@ -43,7 +42,7 @@ public:
 	// 采用BVH加速结构求交
 	HitResult closestHitByBVH(const Ray& ray);
 
-	Vec3f pathTracing(const Ray& ray, int depth);
+	TGAColor pathTracing(const Ray& ray, int depth);
 
 private:
 	struct BVHNode
@@ -52,37 +51,39 @@ private:
 		BVHNode* right = nullptr;
 
 		int index = -1; // 当前节点包含的对象开始索引
-		int nums = 0;  // 当前节点包含的对象数量，nums不为0时表示叶子节点
+		int nums = 0;   // 当前节点包含的对象数量，nums不为0时表示叶子节点
 
-		Vec3f AA; // 包围盒，左下
+		// 包围盒
+		Vec3f AA; // 左下
 		Vec3f BB; // 右上
 	};
 
 	HitResult _closestHitByBVH(const Ray& ray, BVHNode* node);
 
 	// 构建BVH树
-	BVHNode* _buildBVH(size_t left, size_t right, size_t limitCount = 8);
+	BVHNode* _buildBVH(int left, int right, int limitCount = 8);
 
 	/*SVH构建BVH树
-	* 查找左盒子的 n1 个三角形需要花费 T * n1 的时间（其中 t 为常数）
-	* 查找右盒子的 n2 个三角形需要花费 T * n2 的时间
+	* 查找左盒子的 n1 个三角形需要花费 t * n1 的时间（其中 t 为常数）
+	* 查找右盒子的 n2 个三角形需要花费 t * n2 的时间
 	* 假设光线有 p1 的概率击中左盒子，有 p2 的概率击中右盒子，这里用表面积代替，成正相关
 	* 最终的代价为 cost = p1 * n1 + p2 * n2 （这里省略了常数 T）
 	*/
-	BVHNode* _buildBVHBySAH(size_t left, size_t right, size_t limitCount = 8);
+	BVHNode* _buildBVHBySAH(int left, int right, int limitCount = 8);
 
-	// 存在三个返回值，分别表示未相交(-1)、相交(t0)、相交且在包围盒内(t1)
+	// 存在三个返回值，分别表示未相交(-1)、相交(t0)、相交且在包围盒内(t1)，大于0表示相交
 	float _hitAABB(const Ray& ray, const BVHNode* node);
 
-	// 返回最终相交的距离最近三角形
+	// 遍历叶子节点中的三角形，返回距离最近那一个的交点结果
 	HitResult _hitTriangleArray(const Ray& ray, const int left, const int right);
 
 private:
 	void _transCoords(Vec3f* vec);
+	void _countTriangles(int& totalTriangles, const BVHNode* node);
 
 private:
 	std::vector<IObject*> m_objects; // 场景中的物体，负责对象的生命周期
-	std::vector<IObject*> m_lights; // 光源信息, pos、color
+	std::vector<IObject*> m_lights;  // 光源信息, pos、color
 
 	// 相机相关
 	Vec3f m_cameraPos; // 相机位置

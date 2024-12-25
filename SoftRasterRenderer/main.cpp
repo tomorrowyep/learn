@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "reader/include/imodel.h"
 #include "renderengine/include/irenderengine.h"
-#include "renderengine/include/triangleobj.h"
+#include "renderengine/include/iobject.h"
 #include "geometry.h"
 
 constexpr int g_width = 800;
@@ -153,11 +153,11 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 	IRayTraceRenderEngin* pEngine = nullptr;
 	engineInstance((void**)&pEngine, EngineType::Raytracer);
 	if (!pEngine)
-		return ;
+		return;
 
 	pEngine->setDevice(&image);
 	pEngine->setSampleCount(1);
-	pEngine->setMaxDepth(0);
+	pEngine->setMaxDepth(3);
 
 	Vec3f cameraPos(0, 0, 3);
 	Vec3f center(0, 0, 0);
@@ -180,21 +180,21 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 			norm_coords[j] = pIModel->normal(i, j);
 		}
 
-		TriangleObj obj(local_coords);
-		obj.setVertexAttr(VertexAttr::TexCoord, uv_coords);
-		obj.setVertexAttr(VertexAttr::Normal, norm_coords);
-		pEngine->addObj(&obj);
+		IObject* obj = pEngine->createObj(local_coords);
+		obj->setVertexAttr(VertexAttr::TexCoord, uv_coords);
+		obj->setVertexAttr(VertexAttr::Normal, norm_coords);
+		pEngine->addObj(obj);
 	}
 
 	// 添加光源
-	Vec3f lights[3] = { Vec3f(0.4f, 0.99f, 0.4f), Vec3f(-0.4f, 0.99f, -0.4f), Vec3f(-0.4f, 0.99f, 0.4f) };
-	TriangleObj lightObj(lights);
-	Material& material = lightObj.getMaterial();
+	Vec3f lightPos[3] = {Vec3f(0.4f, 0.99f, 0.4f), Vec3f(-0.4f, 0.99f, -0.4f), Vec3f(-0.4f, 0.99f, 0.4f)};
+	IObject* objLight = pEngine->createObj(lightPos);
+	Material& material = objLight->getMaterial();
 	material.color = Vec3f(1, 1, 1);
 	material.isEmissive = true;
-	//pEngine->addLight(&lightObj, Vec3f(1.f, 1.f, 1.f));
+	pEngine->addObj(objLight);
 
-	pEngine->buildBVH(5);
+	pEngine->buildBVH(10);
 
 	constexpr const char* diffusePath = "E:/yt/data/数据/african_head_diffuse.tga";
 
@@ -202,7 +202,7 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 	diffuse.loadTexture(diffusePath);
 	pEngine->setTexture("diffuse", std::move(diffuse));
 
-	pEngine->rayGeneration(ExecutexType::Asynchronous); // Asynchronous Synchronous
+	pEngine->rayGeneration(ExecutexType::Synchronous); // Asynchronous Synchronous
 
 	releaseEngine(pEngine);
 }
@@ -216,7 +216,7 @@ int main()
 	
 	TGAImage image(g_width, g_height, TGAImage::RGB);
 
-	EngineType type = EngineType::Raytracer;// EngineType::Raytracer
+	EngineType type = EngineType::Raytracer;// EngineType::Rasterization
 	switch (type)
 	{
 	case EngineType::Rasterization:

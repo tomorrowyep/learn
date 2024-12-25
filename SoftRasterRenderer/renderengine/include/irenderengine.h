@@ -62,7 +62,8 @@ interface IRasterRenderEngin : public IRenderEngin
 interface IRayTraceRenderEngin : public IRenderEngin
 {
     // …Ë÷√≥°æ∞
-    virtual void addObj(IObject* pScene) PURE;
+    virtual IObject* createObj(const Vec3f* pos) PURE;
+    virtual void addObj(IObject* obj) PURE;
     virtual void addLight(IObject* pos, const Vec3f& color) PURE;
     virtual void setTexture(const std::string& texName, TGAImage* img) PURE;
     virtual void setTexture(const std::string& texName, TGAImage&& img) PURE;

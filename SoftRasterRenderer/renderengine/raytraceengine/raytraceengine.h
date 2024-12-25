@@ -26,7 +26,8 @@ public:
 	virtual void setDevice(TGAImage* device) override;
 
 	// …Ë÷√≥°æ∞
-	virtual void addObj(IObject* pScene) override;
+	virtual IObject* createObj(const Vec3f* pos) override;
+	virtual void addObj(IObject* obj) override;
 	virtual void addLight(IObject* pos, const Vec3f& color) override;
 	virtual void setTexture(const std::string& texName, TGAImage* img) override;
 	virtual void setTexture(const std::string& texName, TGAImage&& img) override;

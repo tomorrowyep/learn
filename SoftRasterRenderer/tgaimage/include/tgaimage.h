@@ -93,11 +93,28 @@ struct TGAColor
 		return res;
 	}
 
+	TGAColor operator* (TGAColor color)
+	{
+		TGAColor res;
+		for (int i = 0; i < 3; i++)
+		{
+			float thisColor = m_bgra[i] / 255.0f;
+			float otherColor = color.m_bgra[i] / 255.0f;
+			float resultColor = thisColor * otherColor;
+
+			resultColor = std::clamp(resultColor * 255.0f, 0.0f, 255.0f);
+			res.m_bgra[i] = static_cast<unsigned char>(std::round(resultColor));
+		}
+
+		res.m_bgra[3] = m_bgra[3];
+		return res;
+	}
+
 	unsigned char m_bgra[4];
 	unsigned char m_bytespp; // 每个像素占用的字节数
 };
 
-class TGAImage 
+class TGAImage
 {
 public:
 	enum Format 

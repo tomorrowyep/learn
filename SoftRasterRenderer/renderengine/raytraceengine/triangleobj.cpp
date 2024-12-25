@@ -1,14 +1,14 @@
 #include "triangleobj.h"
 #include "triangleobj.h"
 
+constexpr float epsilon = 1e-9f;
+
 TriangleObj::TriangleObj(const Vec3f* pVertex)
 {
 	m_pVertexs = std::make_unique<Vec3f[]>(3);
 	m_pVertexs[0] = pVertex[0];
 	m_pVertexs[1] = pVertex[1];
 	m_pVertexs[2] = pVertex[2];
-
-	m_center = (m_pVertexs[0] + m_pVertexs[1] + m_pVertexs[2]) / 3.f;
 }
 
 TriangleObj::TriangleObj(const TriangleObj& other)
@@ -39,7 +39,6 @@ TriangleObj::TriangleObj(const TriangleObj& other)
 	}
 
 	m_tangent = other.m_tangent;
-	m_center = other.m_center;
 	m_material = other.m_material;
 }
 
@@ -74,16 +73,9 @@ TriangleObj& TriangleObj::operator=(const TriangleObj& other)
 	}
 
 	m_tangent = other.m_tangent;
-	m_center = other.m_center;
 	m_material = other.m_material;
 
 	return *this;
-}
-
-IObject* TriangleObj::clone()
-{
-	IObject* tmp = new TriangleObj(*this);
-	return tmp;
 }
 
 Vec3f* TriangleObj::vertex()
@@ -93,35 +85,25 @@ Vec3f* TriangleObj::vertex()
 
 Vec3f TriangleObj::center()
 {
-	return m_center;
+	return (m_pVertexs[0] + m_pVertexs[1] + m_pVertexs[2]) / 3.f;
 }
 
 Vec3f TriangleObj::getMinPoint()
 {
-	float minx = m_pVertexs[0].x, miny = m_pVertexs[0].y, minz = m_pVertexs[0].z;
-
-	for (int i = 1; i < 3; ++i)
-	{
-		minx = std::min(minx, m_pVertexs[i].x);
-		miny = std::min(miny, m_pVertexs[i].y);
-		minz = std::min(minz, m_pVertexs[i].z);
-	}
-
-	return Vec3f(minx, miny, minz);
+	return Vec3f(
+		std::min(m_pVertexs[0].x, std::min(m_pVertexs[1].x, m_pVertexs[2].x)),
+		std::min(m_pVertexs[0].y, std::min(m_pVertexs[1].y, m_pVertexs[2].y)),
+		std::min(m_pVertexs[0].z, std::min(m_pVertexs[1].z, m_pVertexs[2].z))
+	);
 }
 
 Vec3f TriangleObj::getMaxPoint()
 {
-	float maxx = m_pVertexs[0].x, maxy = m_pVertexs[0].y, maxz = m_pVertexs[0].z;
-
-	for (int i = 1; i < 3; ++i)
-	{
-		maxx = std::max(maxx, m_pVertexs[i].x);
-		maxy = std::max(maxy, m_pVertexs[i].y);
-		maxz = std::max(maxz, m_pVertexs[i].z);
-	}
-
-	return Vec3f(maxx, maxy, maxz);
+	return Vec3f(
+		std::max(m_pVertexs[0].x, std::max(m_pVertexs[1].x, m_pVertexs[2].x)),
+		std::max(m_pVertexs[0].y, std::max(m_pVertexs[1].y, m_pVertexs[2].y)),
+		std::max(m_pVertexs[0].z, std::max(m_pVertexs[1].z, m_pVertexs[2].z))
+	);
 }
 
 void TriangleObj::setVertexAttr(const VertexAttr type, const Vec3f* pVertexAttr)
@@ -139,8 +121,6 @@ void TriangleObj::setVertexAttr(const VertexAttr type, const Vec3f* pVertexAttr)
 			m_pVertexs[1] = pVertexAttr[1];
 			m_pVertexs[2] = pVertexAttr[2];
 		}
-		
-		m_center = (m_pVertexs[0] + m_pVertexs[1] + m_pVertexs[2]) / 3.f;
 		break;
 	}
 	case VertexAttr::Normal:
@@ -179,19 +159,19 @@ HitResult TriangleObj::intersect(const Ray& ray)
 
 	Vec3f rayStart = ray.startPoint;
 	Vec3f rayDirection = ray.direction;
-	Vec3f normal = cross(m_pVertexs[1] - m_pVertexs[0], m_pVertexs[2] - m_pVertexs[0]);
+	Vec3f normal = cross(m_pVertexs[1] - m_pVertexs[0], m_pVertexs[2] - m_pVertexs[0]).normalize();
 
 	// 调整法向量
 	if (dot(normal, rayDirection) > 0.0f)
 		normal = normal * -1;
 
 	// 如果视线和三角形平行，即与法线垂直则不计算
-	if (fabs(dot(normal, rayDirection)) < 0.00001f) 
+	if (fabs(dot(normal, rayDirection)) < epsilon)
 		return res;
 
 	// 获取距离并判断方向，如果在背面则不计算
 	float t = (dot(normal, m_pVertexs[0]) - dot(rayStart, normal)) / dot(rayDirection, normal);
-	if (t < 0.0005f)
+	if (t < epsilon)
 		return res;
 
 	Vec3f hitPoint = rayStart + rayDirection * t; // 求交点
@@ -226,9 +206,9 @@ Vec3f TriangleObj::_getBarycentric(const Vec3f& point)
 	Vec3f AB = m_pVertexs[1] - m_pVertexs[0];
 	Vec3f AC = m_pVertexs[2] - m_pVertexs[0];
 
-	// 通过叉乘获取重心坐标, 对应[area, u, v]，area表示面积
+	// 通过叉乘获取重心坐标, 对应[area, u, v]，表示面积
 	Vec3f barycentric = cross(Vec3f(PA.x, AB.x, AC.x), Vec3f(PA.y, AB.y, AC.y));
-	if ((barycentric.x - 0.f) < 1e-9)
+	if ((barycentric.x - 0.f) < epsilon)
 		return Vec3f(-1, 1, 1); // 等于0表示退化为直线，为无效的三角形
 
 	// 转为1-u-v, u, v的标准格式，即比例模式

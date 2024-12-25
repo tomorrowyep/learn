@@ -56,7 +56,7 @@ interface IModel
 
 extern "C"
 {
-    // UTF-8编码，支持中文路径
+    // 支持中文路径
     READER_Module IModel* createInstance(const char* filePath, ReadType mode = ReadType::Synchronous);
     READER_Module void release(IModel* pIMode);
 }
