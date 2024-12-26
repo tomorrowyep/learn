@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "reader/include/imodel.h"
 #include "renderengine/include/irenderengine.h"
 #include "renderengine/include/iobject.h"
@@ -7,7 +7,7 @@
 constexpr int g_width = 800;
 constexpr int g_height = 800;
 
-// ÀûÓÃBresenhamËã·¨»æÖÆÈËÁ³Íø¸ñ
+// åˆ©ç”¨Bresenhamç®—æ³•ç»˜åˆ¶äººè„¸ç½‘æ ¼
 void drawFaceGrid(IModel* pIModel, IRasterRenderEngin* engine)
 {
 	for (int i = 0; i < pIModel->nfaces(); ++i)
@@ -24,7 +24,7 @@ void drawFaceGrid(IModel* pIModel, IRasterRenderEngin* engine)
 			int x1 = (int)std::round((v1.x + 1.) * g_width / 2);
 			int y1 = (int)std::round((v1.y + 1.) * g_height / 2);
 
-			// ±ÜÃâÁÙ½çÌõ¼ş
+			// é¿å…ä¸´ç•Œæ¡ä»¶
 			x0 = std::clamp(x0, 0, g_width - 1);
 			y0 = std::clamp(y0, 0, g_height - 1);
 			x1 = std::clamp(x1, 0, g_width - 1);
@@ -37,9 +37,9 @@ void drawFaceGrid(IModel* pIModel, IRasterRenderEngin* engine)
 
 void loadTex(IShader* pIShader)
 {
-	constexpr const char* diffusePath = "E:/yt/data/Êı¾İ/african_head_diffuse.tga";
-	constexpr const char* normTexPath = "E:/yt/data/Êı¾İ/african_head_nm.tga";
-	constexpr const char* specularTexPath = "E:/yt/data/Êı¾İ/african_head_spec.tga";
+	constexpr const char* diffusePath = "E:/yt/data/æ•°æ®/african_head_diffuse.tga";
+	constexpr const char* normTexPath = "E:/yt/data/æ•°æ®/african_head_nm.tga";
+	constexpr const char* specularTexPath = "E:/yt/data/æ•°æ®/african_head_spec.tga";
 
 	TGAImage diffuse;
 	TGAImage norm;
@@ -53,7 +53,7 @@ void loadTex(IShader* pIShader)
 	pIShader->setTexture(std::move(specular), TextureType::Specular);
 }
 
-// Èı½ÇĞÎÖØĞÄËã·¨²åÖµ²ÉÑùÎÆÀí
+// ä¸‰è§’å½¢é‡å¿ƒç®—æ³•æ’å€¼é‡‡æ ·çº¹ç†
 void drawFaceTriangle(IModel* pIModel, IRasterRenderEngin* engine)
 {
 	Vec3f local_coords[3];
@@ -74,7 +74,7 @@ void drawFaceTriangle(IModel* pIModel, IRasterRenderEngin* engine)
 		vertexInput.pVert.emplace(std::array<Vec3f, 3>{local_coords[0], local_coords[1], local_coords[2]});
 		vertexInput.pUV.emplace(std::array<Vec2f, 3>{uv_coords[0], uv_coords[1], uv_coords[2]});
 		vertexInput.pNorm.emplace(std::array<Vec3f, 3>{norm_coords[0], norm_coords[1], norm_coords[2]});
-		vertexInput.pTangent.emplace(engine->computeTangentSpace(local_coords, uv_coords)); // ¹¹ÔìÇĞÏßÓë¸±ÇĞÏß
+		vertexInput.pTangent.emplace(engine->computeTangentSpace(local_coords, uv_coords)); // æ„é€ åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
 
 		engine->drawTriangle(vertexInput);
 	}
@@ -95,7 +95,7 @@ public:
 		if (!vertexInput.pVert || !vertexInput.pUV)
 			return output;
 
-		// ×ª»»×ø±êÏµ
+		// è½¬æ¢åæ ‡ç³»
 		for (int i = 0; i < 3; ++i)
 		{
 			output.pPos->at(i) = _transCoords(vertexInput.pVert->at(i));
@@ -119,7 +119,7 @@ private:
 	Vec4f _transCoords(const Vec3f& vec)
 	{
 		Vec4f homovec{ vec[0], vec[1], vec[2], 1 };
-		homovec = m_proMatrix * m_viewMatrix * m_modeMatrix * homovec; // ×ª»»µ½²Ã¼ô×ø±ê
+		homovec = m_proMatrix * m_viewMatrix * m_modeMatrix * homovec; // è½¬æ¢åˆ°è£å‰ªåæ ‡
 
 		return homovec;
 	}
@@ -156,7 +156,7 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 		return;
 
 	pEngine->setDevice(&image);
-	pEngine->setSampleCount(1);
+	pEngine->setSampleCount(100);
 	pEngine->setMaxDepth(3);
 
 	Vec3f cameraPos(0, 0, 3);
@@ -165,7 +165,7 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 	pEngine->perspective(45.f, g_width / g_height, 0.1f, 100);
 	pEngine->viewport(g_width, g_height);
 
-	// Ìí¼ÓÎïÌå
+	// æ·»åŠ ç‰©ä½“
 	Vec3f local_coords[3];
 	Vec2f uv_coords[3];
 	Vec3f norm_coords[3];
@@ -186,30 +186,30 @@ void rayTracing(IModel* pIModel, TGAImage& image)
 		pEngine->addObj(obj);
 	}
 
-	// Ìí¼Ó¹âÔ´
+	// æ·»åŠ å…‰æº
 	Vec3f lightPos[3] = {Vec3f(0.4f, 0.99f, 0.4f), Vec3f(-0.4f, 0.99f, -0.4f), Vec3f(-0.4f, 0.99f, 0.4f)};
 	IObject* objLight = pEngine->createObj(lightPos);
 	Material& material = objLight->getMaterial();
-	material.color = Vec3f(1, 1, 1);
+	material.color = Vec3f(1.f, 1.f, 1.f);
 	material.isEmissive = true;
 	pEngine->addObj(objLight);
 
 	pEngine->buildBVH(10);
 
-	constexpr const char* diffusePath = "E:/yt/data/Êı¾İ/african_head_diffuse.tga";
+	constexpr const char* diffusePath = "E:/yt/data/æ•°æ®/african_head_diffuse.tga";
 
 	TGAImage diffuse;
 	diffuse.loadTexture(diffusePath);
 	pEngine->setTexture("diffuse", std::move(diffuse));
 
-	pEngine->rayGeneration(ExecutexType::Synchronous); // Asynchronous Synchronous
+	pEngine->rayGeneration(ExecutexType::Asynchronous); // Asynchronous Synchronous
 
 	releaseEngine(pEngine);
 }
 
 int main()
 {
-	constexpr const char* path = "E:/yt/data/Êı¾İ/african_head.obj";
+	constexpr const char* path = "E:/yt/data/æ•°æ®/african_head.obj";
 	IModel* pIModel = createInstance(path);
 	if (!pIModel)
 		return 0;
@@ -220,11 +220,11 @@ int main()
 	switch (type)
 	{
 	case EngineType::Rasterization:
-		// ¹âÕ¤»¯²âÊÔ
+		// å…‰æ …åŒ–æµ‹è¯•
 		rasterization(pIModel, image);
 		break;
 	case EngineType::Raytracer:
-		// ¹â×·²âÊÔ
+		// å…‰è¿½æµ‹è¯•
 		rayTracing(pIModel, image);
 		break;
 	case EngineType::HardwareAcceleration:
@@ -233,7 +233,7 @@ int main()
 		break;	
 	}
 
-	image.flip_vertically(); // ×ø±êÏµÔ­µã²»Í¬
+	image.flip_vertically(); // åæ ‡ç³»åŸç‚¹ä¸åŒ
 	image.write_tga_file("output.tga");
 	release(pIModel);
 	return 0;

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "tgaimage.h"
 
 TGAImage::TGAImage(int w, int h, int bpp)
@@ -138,7 +138,7 @@ Vec3f TGAImage::normal(Vec2f uvf)
     TGAColor color = get(uv[0], uv[1]);
     Vec3f res;
     for (int i = 0; i < 3; i++)
-        res[2 - i] = (float)color[i] / 255.f * 2.f - 1.f;// ÒòÎªTGAµÄÑÕÉ«Ë³ĞòÊÇbgr
+        res[2 - i] = (float)color[i] / 255.f * 2.f - 1.f;// å› ä¸ºTGAçš„é¢œè‰²é¡ºåºæ˜¯bgr
 
     return res;
 }
@@ -296,7 +296,7 @@ bool TGAImage::_read_tga_file(const std::filesystem::path& filePath)
 
     m_width = header.width;
     m_height = header.height;
-    m_bytespp = header.bitsperpixel >> 3; // ³ıÒÔ8»ñÈ¡µ½Ã¿¸öÏñËØËùÕ¼×Ö½ÚÊı
+    m_bytespp = header.bitsperpixel >> 3; // é™¤ä»¥8è·å–åˆ°æ¯ä¸ªåƒç´ æ‰€å å­—èŠ‚æ•°
     if (m_width <= 0 || m_height <= 0 || (m_bytespp != GRAYSCALE && m_bytespp != RGB && m_bytespp != RGBA))
     {
         in.close();
@@ -338,7 +338,7 @@ bool TGAImage::_read_tga_file(const std::filesystem::path& filePath)
     return true;
 }
 
-// ½âÂëÓÎ³Ì±àÂë£¬ÖØ¸´´ÎÊı+Êı¾İ
+// è§£ç æ¸¸ç¨‹ç¼–ç ï¼Œé‡å¤æ¬¡æ•°+æ•°æ®
 bool TGAImage::_load_rle_data(std::ifstream& in)
 {
     unsigned long pixelcount = m_width * m_height;
@@ -348,44 +348,44 @@ bool TGAImage::_load_rle_data(std::ifstream& in)
 
     do
     {
-        unsigned char chunkheader = 0; // RLE Ñ¹ËõÊı¾İ¿éµÄÍ·²¿£¨±êÊ¶¸Ã¿éµÄ³¤¶È»òÖØ¸´´ÎÊı£©
+        unsigned char chunkheader = 0; // RLE å‹ç¼©æ•°æ®å—çš„å¤´éƒ¨ï¼ˆæ ‡è¯†è¯¥å—çš„é•¿åº¦æˆ–é‡å¤æ¬¡æ•°ï¼‰
         chunkheader = in.get();
         if (!in.good())
             return false;
 
-        // Èç¹û chunkheader Ğ¡ÓÚ 128£¬±íÊ¾¸Ã¿éÊÇÎ´Ñ¹ËõÊı¾İ¿é
+        // å¦‚æœ chunkheader å°äº 128ï¼Œè¡¨ç¤ºè¯¥å—æ˜¯æœªå‹ç¼©æ•°æ®å—
         if (chunkheader < 128)
         {
-            chunkheader++; // chunkheader ±íÊ¾µÄÊÇµ±Ç°¿éµÄ³¤¶È£¬Ğè¼Ó 1
+            chunkheader++; // chunkheader è¡¨ç¤ºçš„æ˜¯å½“å‰å—çš„é•¿åº¦ï¼Œéœ€åŠ  1
 
-            // Öğ¸ö¶ÁÈ¡²»ÖØ¸´µÄÏñËØÊı¾İ
+            // é€ä¸ªè¯»å–ä¸é‡å¤çš„åƒç´ æ•°æ®
             for (int i = 0; i < chunkheader; i++)
             {
-                in.read((char*)colorbuffer.m_bgra, m_bytespp); // ¶ÁÈ¡Ò»¸öÏñËØµÄÑÕÉ«Êı¾İ
+                in.read((char*)colorbuffer.m_bgra, m_bytespp); // è¯»å–ä¸€ä¸ªåƒç´ çš„é¢œè‰²æ•°æ®
                 if (!in.good())
                     return false;
 
-                // ½«ÑÕÉ«Êı¾İ¸´ÖÆµ½Í¼ÏñÊı¾İÖĞ
+                // å°†é¢œè‰²æ•°æ®å¤åˆ¶åˆ°å›¾åƒæ•°æ®ä¸­
                 for (int t = 0; t < m_bytespp; t++)
                 {
                     m_imageData[currentbyte++] = colorbuffer.m_bgra[t];
                 }
 
-                currentpixel++; // Ôö¼ÓÒÑ´¦ÀíµÄÏñËØÊı
-                if (currentpixel > pixelcount) // Èç¹û´¦ÀíµÄÏñËØÊı³¬¹ıÁË×ÜÏñËØÊı£¬·µ»Ø false
+                currentpixel++; // å¢åŠ å·²å¤„ç†çš„åƒç´ æ•°
+                if (currentpixel > pixelcount) // å¦‚æœå¤„ç†çš„åƒç´ æ•°è¶…è¿‡äº†æ€»åƒç´ æ•°ï¼Œè¿”å› false
                     return false;
             }
         }
         else
         {
-            // Èç¹û chunkheader >= 128£¬±íÊ¾¸Ã¿éÊÇÖØ¸´Êı¾İ¿é
-            chunkheader -= 127; // chunkheader ±íÊ¾ÖØ¸´´ÎÊı£¬¼õÈ¥ 127 ºóµÃµ½ÕæÕıµÄÖØ¸´´ÎÊı
+            // å¦‚æœ chunkheader >= 128ï¼Œè¡¨ç¤ºè¯¥å—æ˜¯é‡å¤æ•°æ®å—
+            chunkheader -= 127; // chunkheader è¡¨ç¤ºé‡å¤æ¬¡æ•°ï¼Œå‡å» 127 åå¾—åˆ°çœŸæ­£çš„é‡å¤æ¬¡æ•°
 
-            in.read((char*)colorbuffer.m_bgra, m_bytespp); // ¶ÁÈ¡Ò»¸öÏñËØµÄÑÕÉ«Êı¾İ
-            if (!in.good()) // Èç¹û¶ÁÈ¡Ê§°Ü£¬·µ»Ø false
+            in.read((char*)colorbuffer.m_bgra, m_bytespp); // è¯»å–ä¸€ä¸ªåƒç´ çš„é¢œè‰²æ•°æ®
+            if (!in.good()) // å¦‚æœè¯»å–å¤±è´¥ï¼Œè¿”å› false
                 return false;
 
-            // ½«¶ÁÈ¡µ½µÄÑÕÉ«Êı¾İÖØ¸´Ğ´ÈëÍ¼ÏñÊı¾İ
+            // å°†è¯»å–åˆ°çš„é¢œè‰²æ•°æ®é‡å¤å†™å…¥å›¾åƒæ•°æ®
             for (int i = 0; i < chunkheader; i++)
             {
                 for (int t = 0; t < m_bytespp; t++)
@@ -393,12 +393,12 @@ bool TGAImage::_load_rle_data(std::ifstream& in)
                     m_imageData[currentbyte++] = colorbuffer.m_bgra[t];
                 }
 
-                currentpixel++; // Ôö¼ÓÒÑ´¦ÀíµÄÏñËØÊı
+                currentpixel++; // å¢åŠ å·²å¤„ç†çš„åƒç´ æ•°
                 if (currentpixel > pixelcount)
                     return false;
             }
         }
-    } while (currentpixel < pixelcount); // ¼ÌĞø´¦ÀíÖ±µ½ËùÓĞÏñËØ¶¼½âÂëÍê³É
+    } while (currentpixel < pixelcount); // ç»§ç»­å¤„ç†ç›´åˆ°æ‰€æœ‰åƒç´ éƒ½è§£ç å®Œæˆ
 
     return true;
 }

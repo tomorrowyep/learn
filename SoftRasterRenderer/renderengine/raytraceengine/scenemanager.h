@@ -1,4 +1,4 @@
-#ifndef __SCENEMANAGER__H__
+ï»¿#ifndef __SCENEMANAGER__H__
 #define __SCENEMANAGER__H__
 
 #include <vector>
@@ -36,10 +36,10 @@ public:
 
 	void setMaxDepth(int depth);
 
-	// ±©Á¦Çó½â£¬»á±éÀúÃ¿¸öÍ¼Ôª
+	// æš´åŠ›æ±‚è§£ï¼Œä¼šéå†æ¯ä¸ªå›¾å…ƒ
 	HitResult closestHit(const Ray& ray);
 	
-	// ²ÉÓÃBVH¼ÓËÙ½á¹¹Çó½»
+	// é‡‡ç”¨BVHåŠ é€Ÿç»“æ„æ±‚äº¤
 	HitResult closestHitByBVH(const Ray& ray);
 
 	TGAColor pathTracing(const Ray& ray, int depth);
@@ -50,55 +50,56 @@ private:
 		BVHNode* left = nullptr;
 		BVHNode* right = nullptr;
 
-		int index = -1; // µ±Ç°½Úµã°üº¬µÄ¶ÔÏó¿ªÊ¼Ë÷Òı
-		int nums = 0;   // µ±Ç°½Úµã°üº¬µÄ¶ÔÏóÊıÁ¿£¬nums²»Îª0Ê±±íÊ¾Ò¶×Ó½Úµã
+		int index = -1; // å½“å‰èŠ‚ç‚¹åŒ…å«çš„å¯¹è±¡å¼€å§‹ç´¢å¼•
+		int nums = 0;   // å½“å‰èŠ‚ç‚¹åŒ…å«çš„å¯¹è±¡æ•°é‡ï¼Œnumsä¸ä¸º0æ—¶è¡¨ç¤ºå¶å­èŠ‚ç‚¹
 
-		// °üÎ§ºĞ
-		Vec3f AA; // ×óÏÂ
-		Vec3f BB; // ÓÒÉÏ
+		// åŒ…å›´ç›’
+		Vec3f AA; // å·¦ä¸‹
+		Vec3f BB; // å³ä¸Š
 	};
 
 	HitResult _closestHitByBVH(const Ray& ray, BVHNode* node);
 
-	// ¹¹½¨BVHÊ÷
+	// æ„å»ºBVHæ ‘
 	BVHNode* _buildBVH(int left, int right, int limitCount = 8);
 
-	/*SVH¹¹½¨BVHÊ÷
-	* ²éÕÒ×óºĞ×ÓµÄ n1 ¸öÈı½ÇĞÎĞèÒª»¨·Ñ t * n1 µÄÊ±¼ä£¨ÆäÖĞ t Îª³£Êı£©
-	* ²éÕÒÓÒºĞ×ÓµÄ n2 ¸öÈı½ÇĞÎĞèÒª»¨·Ñ t * n2 µÄÊ±¼ä
-	* ¼ÙÉè¹âÏßÓĞ p1 µÄ¸ÅÂÊ»÷ÖĞ×óºĞ×Ó£¬ÓĞ p2 µÄ¸ÅÂÊ»÷ÖĞÓÒºĞ×Ó£¬ÕâÀïÓÃ±íÃæ»ı´úÌæ£¬³ÉÕıÏà¹Ø
-	* ×îÖÕµÄ´ú¼ÛÎª cost = p1 * n1 + p2 * n2 £¨ÕâÀïÊ¡ÂÔÁË³£Êı T£©
+	/*SVHæ„å»ºBVHæ ‘
+	* æŸ¥æ‰¾å·¦ç›’å­çš„ n1 ä¸ªä¸‰è§’å½¢éœ€è¦èŠ±è´¹ t * n1 çš„æ—¶é—´ï¼ˆå…¶ä¸­ t ä¸ºå¸¸æ•°ï¼‰
+	* æŸ¥æ‰¾å³ç›’å­çš„ n2 ä¸ªä¸‰è§’å½¢éœ€è¦èŠ±è´¹ t * n2 çš„æ—¶é—´
+	* å‡è®¾å…‰çº¿æœ‰ p1 çš„æ¦‚ç‡å‡»ä¸­å·¦ç›’å­ï¼Œæœ‰ p2 çš„æ¦‚ç‡å‡»ä¸­å³ç›’å­ï¼Œè¿™é‡Œç”¨è¡¨é¢ç§¯ä»£æ›¿ï¼Œæˆæ­£ç›¸å…³
+	* æœ€ç»ˆçš„ä»£ä»·ä¸º cost = p1 * n1 + p2 * n2 ï¼ˆè¿™é‡Œçœç•¥äº†å¸¸æ•° Tï¼‰
 	*/
 	BVHNode* _buildBVHBySAH(int left, int right, int limitCount = 8);
 
-	// ´æÔÚÈı¸ö·µ»ØÖµ£¬·Ö±ğ±íÊ¾Î´Ïà½»(-1)¡¢Ïà½»(t0)¡¢Ïà½»ÇÒÔÚ°üÎ§ºĞÄÚ(t1)£¬´óÓÚ0±íÊ¾Ïà½»
+	// å­˜åœ¨ä¸‰ä¸ªè¿”å›å€¼ï¼Œåˆ†åˆ«è¡¨ç¤ºæœªç›¸äº¤(-1)ã€ç›¸äº¤(t0)ã€ç›¸äº¤ä¸”åœ¨åŒ…å›´ç›’å†…(t1)ï¼Œå¤§äº0è¡¨ç¤ºç›¸äº¤
 	float _hitAABB(const Ray& ray, const BVHNode* node);
 
-	// ±éÀúÒ¶×Ó½ÚµãÖĞµÄÈı½ÇĞÎ£¬·µ»Ø¾àÀë×î½üÄÇÒ»¸öµÄ½»µã½á¹û
+	// éå†å¶å­èŠ‚ç‚¹ä¸­çš„ä¸‰è§’å½¢ï¼Œè¿”å›è·ç¦»æœ€è¿‘é‚£ä¸€ä¸ªçš„äº¤ç‚¹ç»“æœ
 	HitResult _hitTriangleArray(const Ray& ray, const int left, const int right);
 
 private:
 	void _transCoords(Vec3f* vec);
 	void _countTriangles(int& totalTriangles, const BVHNode* node);
+	void _deleteBVH(BVHNode* node);
 
 private:
-	std::vector<IObject*> m_objects; // ³¡¾°ÖĞµÄÎïÌå£¬¸ºÔğ¶ÔÏóµÄÉúÃüÖÜÆÚ
-	std::vector<IObject*> m_lights;  // ¹âÔ´ĞÅÏ¢, pos¡¢color
+	std::vector<IObject*> m_objects; // åœºæ™¯ä¸­çš„ç‰©ä½“ï¼Œè´Ÿè´£å¯¹è±¡çš„ç”Ÿå‘½å‘¨æœŸ
+	std::vector<IObject*> m_lights;  // å…‰æºä¿¡æ¯, posã€color
 
-	// Ïà»úÏà¹Ø
-	Vec3f m_cameraPos; // Ïà»úÎ»ÖÃ
+	// ç›¸æœºç›¸å…³
+	Vec3f m_cameraPos; // ç›¸æœºä½ç½®
 
-	// ÊÓÍ¼×ª»»Ïà¹Ø£¬Ä¬ÈÏÎªµ¥Î»¾ØÕó
-	Matrix m_modeMatrix; // ÊÀ½ç×ø±ê
-	Matrix m_viewMatrix; // Ïà»ú£¨ÊÓ½Ç£©×ø±ê
-	Matrix m_proMatrix; // ²Ã¼ô×ø±ê->Õı½»¡¢Í¸ÊÓ
-	Matrix m_viewportMatrix; // ÊÓ¿Ú×ø±ê
+	// è§†å›¾è½¬æ¢ç›¸å…³ï¼Œé»˜è®¤ä¸ºå•ä½çŸ©é˜µ
+	Matrix m_modeMatrix; // ä¸–ç•Œåæ ‡
+	Matrix m_viewMatrix; // ç›¸æœºï¼ˆè§†è§’ï¼‰åæ ‡
+	Matrix m_proMatrix; // è£å‰ªåæ ‡->æ­£äº¤ã€é€è§†
+	Matrix m_viewportMatrix; // è§†å£åæ ‡
 
-	int m_maxDepth = 5; // ×î´óµİ¹éÉî¶È
+	int m_maxDepth = 5; // æœ€å¤§é€’å½’æ·±åº¦
 
-	BVHNode* m_pBVHRoot = nullptr; // BVH¸ù½Úµã
+	BVHNode* m_pBVHRoot = nullptr; // BVHæ ¹èŠ‚ç‚¹
 
-	// ÅÅĞòº¯Êı0,1,2·Ö±ğ±íÊ¾x,y,zÖá
+	// æ’åºå‡½æ•°0,1,2åˆ†åˆ«è¡¨ç¤ºx,y,zè½´
 	std::array<std::function<bool(IObject*, IObject*)>, 3> m_cmpFuncs;
 
 	TextureContainer m_texs;

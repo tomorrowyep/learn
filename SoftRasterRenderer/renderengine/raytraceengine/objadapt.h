@@ -1,4 +1,4 @@
-#ifndef __OBJADAPT_H__
+﻿#ifndef __OBJADAPT_H__
 #define __OBJADAPT_H__
 
 #include "iobject.h"

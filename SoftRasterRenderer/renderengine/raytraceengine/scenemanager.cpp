@@ -1,16 +1,16 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "common.h"
 #include "scenemanager.h"
 
 namespace
 {
-	// ¾«¶È
+	// ç²¾åº¦
 	constexpr float epsilon = 1e-5f;
 
-	// ¶íÂŞË¹ÂÖÅÌ¶Ä£¬ÖÕÖ¹¸ÅÂÊ
+	// ä¿„ç½—æ–¯è½®ç›˜èµŒï¼Œç»ˆæ­¢æ¦‚ç‡
 	constexpr float russianRouletteChance = 0.8f;
 
-	// °´ÕÕÖĞĞÄÅÅĞò -- ±È½Ïº¯Êı
+	// æŒ‰ç…§ä¸­å¿ƒæ’åº -- æ¯”è¾ƒå‡½æ•°
 	bool cmpx(IObject* left, IObject* right)
 	{
 		return left->center().x < right->center().x;
@@ -33,13 +33,15 @@ SceneManager::~SceneManager()
 	{
 		delete obj;
 	}
+
+	_deleteBVH(m_pBVHRoot);
+	m_pBVHRoot = nullptr;
 }
 
 void SceneManager::addObj(IObject* obj)
 {
 	Vec3f* pVertex = obj->vertex();
 	_transCoords(pVertex);
-	obj->setVertexAttr(VertexAttr::Position, pVertex); // ĞèÒªÖØĞÂ¼ÆËãÖĞĞÄµã
 	
 	m_objects.push_back(obj);
 }
@@ -107,7 +109,7 @@ Matrix SceneManager::getViewportMatrix()
 
 TGAColor SceneManager::getTGATexture(const std::string& texName, const Vec2f& uv)
 {
-	// »ñÈ¡ÎÆÀí
+	// è·å–çº¹ç†
 	TGAColor tgaColor;
 	auto itemTex = m_texs.find(texName);
 	if (itemTex != m_texs.end())
@@ -118,11 +120,11 @@ TGAColor SceneManager::getTGATexture(const std::string& texName, const Vec2f& uv
 
 Vec3f SceneManager::projTransform2World(const Vec4f& clipPos)
 {
-	// ´Ó²Ã¼ô×ø±êµ½ÊÓ×¶Ìå×ø±ê
+	// ä»è£å‰ªåæ ‡åˆ°è§†é”¥ä½“åæ ‡
 	Matrix invProjMatrix = m_proMatrix.invert();
 	Vec4f viewPos = invProjMatrix * clipPos;
 
-	// ´ÓÊÓ×¶Ìå×ø±êµ½ÊÀ½ç×ø±ê
+	// ä»è§†é”¥ä½“åæ ‡åˆ°ä¸–ç•Œåæ ‡
 	Matrix invViewMatrix = m_viewMatrix.invert();
 	Vec4f worldPos = invViewMatrix * viewPos;
 	return worldPos;
@@ -167,55 +169,57 @@ HitResult SceneManager::closestHitByBVH(const Ray& ray)
 TGAColor SceneManager::pathTracing(const Ray& ray, int depth)
 {
 	if (depth > m_maxDepth)
-		return TGAColor();
+		return TGAColor(255, 255, 255);
 
 	HitResult res = closestHitByBVH(ray);
 	//HitResult res = closestHit(ray);
 	if (!res.isHit)
 		return TGAColor();
 
-	// Èç¹ûÊÇ¹âÔ´Ôò·µ»Ø¶ÔÓ¦ÑÕÉ«
+	// å¦‚æœæ˜¯å…‰æºåˆ™è¿”å›å¯¹åº”é¢œè‰²
 	if (res.material.isEmissive)
 		return res.material.color;
 
-	// ¶íÂŞË¹ÂÖÅÌ¶Ä
+	// ä¿„ç½—æ–¯è½®ç›˜èµŒ
 	float r = RenderEngine::randf();
 	if (r > russianRouletteChance)
 		return TGAColor();
 
-	// Éú³ÉËæ»ú¹âÏß
+	// ç”Ÿæˆéšæœºå…‰çº¿
 	Ray randomRay;
 	randomRay.startPoint = res.hitPoint;
 	randomRay.direction = RenderEngine::randomDirection(res.material.normal).normalize();
 
 	TGAColor color;
-	float cosine = fabs(dot(ray.direction * -1, res.material.normal)); // ¹âÏßÈëÉä½ÇÓàÏÒÖµ£¬¼´ÑÕÉ«¹±Ï×µÄÈ¨ÖØ
+	float cosine = fabs(dot(ray.direction * -1, res.material.normal)); // å…‰çº¿å…¥å°„è§’ä½™å¼¦å€¼ï¼Œå³é¢œè‰²è´¡çŒ®çš„æƒé‡
 
-	// ¸ù¾İ·´ÉäÂÊ¾ö¶¨¹âÏß×îÖÕµÄ·½Ïò
+	// æ ¹æ®åå°„ç‡å†³å®šå…‰çº¿æœ€ç»ˆçš„æ–¹å‘
 	r = RenderEngine::randf();
 	if (r < res.material.specularRate)
 	{
-		// ¾µÃæ·´Éä
+		// é•œé¢åå°„
+		randomRay.direction = randomRay.direction * -1;
 		Vec3f ref = RenderEngine::reflect(res.material.normal, ray.direction).normalize();
 		randomRay.direction = RenderEngine::mix(ref, randomRay.direction, res.material.roughness);
 		color = pathTracing(randomRay, depth + 1) * cosine;
 	}
 	else if (res.material.specularRate <= r && r <= res.material.refractRate)
 	{
-		// ÕÛÉä
+		// æŠ˜å°„
 		Vec3f ref = RenderEngine::refract(ray.direction, res.material.normal, res.material.refractAngle).normalize();
-		randomRay.direction = RenderEngine::mix(ref, randomRay.direction * -1, res.material.refractRoughness);
+		randomRay.direction = RenderEngine::mix(ref, randomRay.direction, res.material.refractRoughness);
 		color = pathTracing(randomRay, depth + 1) * cosine;
 	}
 	else
 	{
-		// Âş·´Éä
+		// æ¼«åå°„
+		randomRay.direction = randomRay.direction * -1;
 		color = getTGATexture("diffuse", res.material.texCoords);
 		TGAColor ptColor = pathTracing(randomRay, depth + 1) * cosine;
 		color = ptColor * color;
 	}
 
-	return color * (1.f / russianRouletteChance); // ±£Ö¤×Ü¹âÏßÇ¿¶ÈÊÇÒ»ÖÂµÄ
+	return color * (1.f / russianRouletteChance); // ä¿è¯æ€»å…‰çº¿å¼ºåº¦æ˜¯ä¸€è‡´çš„
 }
 
 HitResult SceneManager::_closestHitByBVH(const Ray& ray, BVHNode* node)
@@ -243,7 +247,7 @@ HitResult SceneManager::_closestHitByBVH(const Ray& ray, BVHNode* node)
 
 SceneManager::BVHNode* SceneManager::_buildBVH(int left, int right, int limitCount)
 {
-	// µİ¹éÖÕÖ¹Ìõ¼ş
+	// é€’å½’ç»ˆæ­¢æ¡ä»¶
 	if (left > right)
 		return nullptr;
 
@@ -251,7 +255,7 @@ SceneManager::BVHNode* SceneManager::_buildBVH(int left, int right, int limitCou
 	node->AA = m_objects[left]->getMinPoint();
 	node->BB = m_objects[left]->getMaxPoint();
 
-	// ¼ÆËã°üÎ§ºĞ
+	// è®¡ç®—åŒ…å›´ç›’
 	for (int i = left + 1; i <= right; ++i)
 	{
 		node->AA = RenderEngine::min(node->AA, m_objects[i]->getMinPoint());
@@ -265,7 +269,7 @@ SceneManager::BVHNode* SceneManager::_buildBVH(int left, int right, int limitCou
 		return node;
 	}
 
-	// Ñ¡Ôñ×î³¤µÄÖá½øĞĞ»®·Ö
+	// é€‰æ‹©æœ€é•¿çš„è½´è¿›è¡Œåˆ’åˆ†
 	Vec3f diff = node->BB - node->AA;
 	int maxAxis = (diff.x >= diff.y && diff.x >= diff.z) ? 0 : (diff.y >= diff.z ? 1 : 2);
 	std::sort(m_objects.begin() + left, m_objects.begin() + right + 1, m_cmpFuncs[maxAxis]);
@@ -279,7 +283,7 @@ SceneManager::BVHNode* SceneManager::_buildBVH(int left, int right, int limitCou
 
 SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int limitCount)
 {
-	// µİ¹éÖÕÖ¹Ìõ¼ş
+	// é€’å½’ç»ˆæ­¢æ¡ä»¶
 	if (left > right)
 		return nullptr;
 
@@ -287,14 +291,14 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 	node->AA = m_objects[left]->getMinPoint();
 	node->BB = m_objects[left]->getMaxPoint();
 
-	// ¼ÆËã°üÎ§ºĞ
+	// è®¡ç®—åŒ…å›´ç›’
 	for (int i = left + 1; i <= right; ++i)
 	{
 		node->AA = RenderEngine::min(node->AA, m_objects[i]->getMinPoint());
 		node->BB = RenderEngine::max(node->BB, m_objects[i]->getMaxPoint());
 	}
 
-	// Ò¶×Ó½ÚµãÖ±½Ó·µ»Ø
+	// å¶å­èŠ‚ç‚¹ç›´æ¥è¿”å›
 	if ((right - left + 1) <= limitCount)
 	{
 		node->index = left;
@@ -302,18 +306,18 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 		return node;
 	}
 
-	// ²ÉÈ¡SAH²ßÂÔÑ¡Ôñ´ú¼Û×îĞ¡µÄÖá½øĞĞ»®·Ö
+	// é‡‡å–SAHç­–ç•¥é€‰æ‹©ä»£ä»·æœ€å°çš„è½´è¿›è¡Œåˆ’åˆ†
 	float finalCost = FLT_MAX;
-	int finalAxis = 0; // ¼ÇÂ¼×îÖÕÑ¡ÔñµÄÖá
-	int finalSplit = (left + right) / 2; // ¼ÇÂ¼×îÖÕµÄ»®·ÖÎ»ÖÃ
+	int finalAxis = 0; // è®°å½•æœ€ç»ˆé€‰æ‹©çš„è½´
+	int finalSplit = (left + right) / 2; // è®°å½•æœ€ç»ˆçš„åˆ’åˆ†ä½ç½®
 
-	// ±éÀúÃ¿¸öÖá»ñÈ¡µ½×îĞ¡µÄ´ú¼Û
+	// éå†æ¯ä¸ªè½´è·å–åˆ°æœ€å°çš„ä»£ä»·
 	for (int axis = 0; axis < 3; ++axis)
 	{
-		// °´ÖáÅÅĞò
+		// æŒ‰è½´æ’åº
 		std::sort(m_objects.begin() + left, m_objects.begin() + right + 1, m_cmpFuncs[axis]);
 
-		// ¹¹Ôì×ó½ÚµãÇ°×º£¬±íÊ¾left->iµÄÇø¼äµÄ×î´óÖµºÍ×îĞ¡Öµ
+		// æ„é€ å·¦èŠ‚ç‚¹å‰ç¼€ï¼Œè¡¨ç¤ºleft->içš„åŒºé—´çš„æœ€å¤§å€¼å’Œæœ€å°å€¼
 		std::vector<Vec3f> preLeftMin(right - left + 1, FLT_MAX);
 		std::vector<Vec3f> preLeftMax(right - left + 1, -FLT_MAX);
 		preLeftMin[0] = m_objects[left]->getMinPoint();
@@ -324,7 +328,7 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 			preLeftMax[l - left] = RenderEngine::max(preLeftMax[l - left - 1], m_objects[l]->getMaxPoint());
 		}
 
-		// ¹¹ÔìÓÒ½ÚµãÇ°×º£¬±íÊ¾right->iÇø¼äµÄ×î´óÖµºÍ×îĞ¡Öµ
+		// æ„é€ å³èŠ‚ç‚¹å‰ç¼€ï¼Œè¡¨ç¤ºright->iåŒºé—´çš„æœ€å¤§å€¼å’Œæœ€å°å€¼
 		std::vector<Vec3f> preRightMin(right - left + 1, FLT_MAX);
 		std::vector<Vec3f> preRightMax(right - left + 1, -FLT_MAX);
 		preRightMin[right - left] = m_objects[right]->getMinPoint();
@@ -335,26 +339,26 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 			preRightMax[r - left] = RenderEngine::max(preRightMax[r - left + 1], m_objects[r]->getMaxPoint());
 		}
 
-		// ±éÀúÑ°ÕÒ·Ö¸î
+		// éå†å¯»æ‰¾åˆ†å‰²
 		float cost = FLT_MAX;
 		int split = left;
 		for (int partition = left; partition < right; ++partition)
 		{
-			// ×ó±ß°üÎ§ºĞ
+			// å·¦è¾¹åŒ…å›´ç›’
 			Vec3f leftMin = preLeftMin[partition - left];
 			Vec3f leftMax = preLeftMax[partition - left];
 			Vec3f lenLeft = leftMax - leftMin;
 			float leftSurfaceArea = 2 * (lenLeft.x * lenLeft.y + lenLeft.x * lenLeft.z + lenLeft.y * lenLeft.z);
 			float leftCost = leftSurfaceArea * (partition - left + 1);
 
-			// ÓÒ±ß°üÎ§ºĞ
+			// å³è¾¹åŒ…å›´ç›’
 			Vec3f rightMin = preRightMin[partition - left + 1];
 			Vec3f rightMax = preRightMax[partition - left + 1];
 			Vec3f lenRight = rightMax - rightMin;
 			float rightSurfaceArea = 2 * (lenRight.x * lenRight.y + lenRight.x * lenRight.z + lenRight.y * lenRight.z);
 			float rightCost = rightSurfaceArea * (right - partition);
 
-			// ¼ÆËãÃ¿¸öÖá×îĞ¡µÄ´ú¼Û
+			// è®¡ç®—æ¯ä¸ªè½´æœ€å°çš„ä»£ä»·
 			float totalCost = leftCost + rightCost;
 			if (totalCost < cost)
 			{
@@ -363,7 +367,7 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 			}
 		}
 
-		// ¸üĞÂ×îÖÕµÄ×îĞ¡´ú¼Û
+		// æ›´æ–°æœ€ç»ˆçš„æœ€å°ä»£ä»·
 		if (cost < finalCost)
 		{
 			finalCost = cost;
@@ -372,7 +376,7 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 		}
 	}
 
-	// ¸ù¾İ×îÖÕµÄÖáºÍ»®·ÖÎ»ÖÃ½øĞĞÅÅĞò
+	// æ ¹æ®æœ€ç»ˆçš„è½´å’Œåˆ’åˆ†ä½ç½®è¿›è¡Œæ’åº
 	assert(finalAxis >= 0 && finalAxis < 3);
 	std::sort(m_objects.begin() + left, m_objects.begin() + right + 1, m_cmpFuncs[finalAxis]);
 	node->left = _buildBVHBySAH(left, finalSplit, limitCount);
@@ -383,21 +387,21 @@ SceneManager::BVHNode* SceneManager::_buildBVHBySAH(int left, int right, int lim
 
 float SceneManager::_hitAABB(const Ray& ray, const BVHNode* node)
 {
-	// ¼ÆËã·½ÏòµÄµ¹Êı
+	// è®¡ç®—æ–¹å‘çš„å€’æ•°
 	Vec3f invDir(1.0f / ray.direction.x, 1.0f / ray.direction.y, 1.0f / ray.direction.z);
 
-	// ¼ÆËã½øÈëµãºÍ³öÈ¥µãÔÚÃ¿¸öÖáÉÏµÄÖµ
+	// è®¡ç®—è¿›å…¥ç‚¹å’Œå‡ºå»ç‚¹åœ¨æ¯ä¸ªè½´ä¸Šçš„å€¼
 	Vec3f in = multiply_elements(node->AA - ray.startPoint, invDir);
 	Vec3f out = multiply_elements(node->BB - ray.startPoint, invDir);
 
-	// ¹âÏßµÄ·½Ïò²»È·¶¨
+	// å…‰çº¿çš„æ–¹å‘ä¸ç¡®å®š
 	Vec3f tMin = RenderEngine::min(in, out);
 	Vec3f tMax = RenderEngine::max(in, out);
 
 	float t0 = std::max(tMin.x, std::max(tMin.y, tMin.z));
 	float t1 = std::min(tMax.x, std::min(tMax.y, tMax.z));
 
-	// ´¦ÀíÏàÇĞÇé¿ö£¬¼´ t1 - t0 = 0
+	// å¤„ç†ç›¸åˆ‡æƒ…å†µï¼Œå³ t1 - t0 = 0
 	if (std::abs(t1 - t0) < epsilon)
 		return t0;
 
@@ -424,7 +428,7 @@ void SceneManager::_transCoords(Vec3f* vec)
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec4f homovec{ vec[i][0], vec[i][1], vec[i][2], 1 };
-		homovec = m_modeMatrix * homovec; // ×ª»»µ½ÊÀ½ç×ø±ê
+		homovec = m_modeMatrix * homovec; // è½¬æ¢åˆ°ä¸–ç•Œåæ ‡
 
 		vec[i] = Vec3f(homovec[0], homovec[1], homovec[2]);
 	}
@@ -432,15 +436,28 @@ void SceneManager::_transCoords(Vec3f* vec)
 
 void SceneManager::_countTriangles(int& totalTriangles, const BVHNode* node)
 {
-	if (node->nums > 0)  // Ò¶×Ó½Úµã
+	if (node->nums > 0)  // å¶å­èŠ‚ç‚¹
 	{
-		totalTriangles += node->nums;  // ÀÛ¼ÓÒ¶×Ó½ÚµãÖĞµÄÈı½ÇĞÎÊıÁ¿
+		totalTriangles += node->nums;  // ç´¯åŠ å¶å­èŠ‚ç‚¹ä¸­çš„ä¸‰è§’å½¢æ•°é‡
 	}
-	else  // µİ¹é´¦Àí×Ó½Úµã
+	else  // é€’å½’å¤„ç†å­èŠ‚ç‚¹
 	{
 		if (node->left)
 			_countTriangles(totalTriangles, node->left);
 		if (node->right)
 			_countTriangles(totalTriangles, node->right);
 	}
+}
+
+void SceneManager::_deleteBVH(BVHNode* node)
+{
+	if (!node)
+		return;
+
+	if (node->left)
+		_deleteBVH(node->left);
+	if (node->right)
+		_deleteBVH(node->right);
+
+	delete node;
 }

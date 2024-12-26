@@ -1,4 +1,4 @@
-#include "common.h"
+ï»¿#include "common.h"
 #include <random>
 
 namespace RenderEngine
@@ -8,7 +8,7 @@ namespace RenderEngine
 	Matrix lookat(Vec3f cameraPos, Vec3f target, Vec3f up)
 	{
 		Vec3f FZ = (cameraPos - target).normalize();
-		Vec3f RX = cross(up, FZ).normalize(); // ²æ³ËË³Ğò²»ÄÜ¸Ä±ä£¬×ñÑ­ÓÒÊÖ·¨Ôò
+		Vec3f RX = cross(up, FZ).normalize(); // å‰ä¹˜é¡ºåºä¸èƒ½æ”¹å˜ï¼Œéµå¾ªå³æ‰‹æ³•åˆ™
 		Vec3f UY = cross(FZ, RX).normalize();
 
 		Matrix rotation;
@@ -26,8 +26,8 @@ namespace RenderEngine
 
 	Matrix ortho(float left, float right, float bottom, float top, float near, float far)
 	{
-		// ·ÖÎªÁ½²½£¬ÏÈ½«left£¬righ·¶Î§ÒÆ¶¯µ½Ô­µãx - (right + left) / 2
-		// ÔÙ½«ÒÆ¶¯µ½Ô­µãµÄ·¶Î§³ËÒÔ³¤¶È±ÈÖµ2/right - left
+		// åˆ†ä¸ºä¸¤æ­¥ï¼Œå…ˆå°†leftï¼ŒrighèŒƒå›´ç§»åŠ¨åˆ°åŸç‚¹x - (right + left) / 2
+		// å†å°†ç§»åŠ¨åˆ°åŸç‚¹çš„èŒƒå›´ä¹˜ä»¥é•¿åº¦æ¯”å€¼2/right - left
 		Matrix proMatrix;
 		proMatrix[0][0] = 2.0f / (right - left);
 		proMatrix[0][3] = -(right + left) / (right - left);
@@ -52,11 +52,11 @@ namespace RenderEngine
 
 	Matrix perspective(float fov, float aspect, float near, float far)
 	{
-		// opglÖĞÏÈ½«µãÍ¶Ó°µ½½üÆ½Ãæ£¬¼´x = n / -ze * xe, ·¶Î§ÔÚ-w/2,w/2
-		// ÔÙ×ªÎªndc×ø±êÏµ-1£¬1Ö®¼ä£¬¼´Í¬Ê±³ËÒÔ2/w
-		// Zndc = (Aze  + B) / -ze£¬Âú×ã-1 = (A*(-n) + B) / n¡¢1 = (A*(-f) + B)
+		// opglä¸­å…ˆå°†ç‚¹æŠ•å½±åˆ°è¿‘å¹³é¢ï¼Œå³x = n / -ze * xe, èŒƒå›´åœ¨-w/2,w/2
+		// å†è½¬ä¸ºndcåæ ‡ç³»-1ï¼Œ1ä¹‹é—´ï¼Œå³åŒæ—¶ä¹˜ä»¥2/w
+		// Zndc = (Aze  + B) / -zeï¼Œæ»¡è¶³-1 = (A*(-n) + B) / nã€1 = (A*(-f) + B)
 		Matrix proMatrix;
-		float fovInRadians = fov * (PI / 180.0f); // ½Ç¶È×ª»¡¶È
+		float fovInRadians = fov * (PI / 180.0f); // è§’åº¦è½¬å¼§åº¦
 		float halfHeightDivNear = std::tan(fovInRadians / 2.0f);
 
 		proMatrix[0][0] = 1.0f / (aspect * halfHeightDivNear);
@@ -94,10 +94,10 @@ namespace RenderEngine
 		Vec2f deltaUV1 = uv1 - uv0;
 		Vec2f deltaUV2 = uv2 - uv0;
 
-		// ¼ÆËãÏµÊı f
+		// è®¡ç®—ç³»æ•° f
 		float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
 
-		// ¼ÆËãÇĞÏß£¨Tangent£©ºÍ¸±ÇĞÏß£¨Bitangent£©
+		// è®¡ç®—åˆ‡çº¿ï¼ˆTangentï¼‰å’Œå‰¯åˆ‡çº¿ï¼ˆBitangentï¼‰
 		Vec3f tangent = (edge1 * deltaUV2.y - edge2 * deltaUV1.y) * f;
 		Vec3f bitangent = (edge2 * deltaUV1.x - edge1 * deltaUV2.x) * f;
 
@@ -106,7 +106,7 @@ namespace RenderEngine
 
 	Vec3f reflect(const Vec3f& N, const Vec3f& L)
 	{
-		return (N * (N * L)) * 2.0 - L; // ¸ù¾İ·´Éä¹«Ê½
+		return (N * (N * L)) * 2.0 - L; // æ ¹æ®åå°„å…¬å¼
 	}
 
 	Vec3f mix(const Vec3f& a, const Vec3f& b, float t)
@@ -116,13 +116,13 @@ namespace RenderEngine
 
 	Vec3f refract(const Vec3f& I, const Vec3f& N, float rate)
 	{
-		// ¼ÆËãÈëÉä¹âÏßÓë·¨ÏßµÄµã»ı
+		// è®¡ç®—å…¥å°„å…‰çº¿ä¸æ³•çº¿çš„ç‚¹ç§¯
 		float cosI = dot(I, N);
 
-		// ¸ù¾İË¹Äù¶û¶¨ÂÉ¼ÆËãÕÛÉäÂÊµÄ±ÈÖµ (Í¨³£ÊÇ n1/n2)
+		// æ ¹æ®æ–¯æ¶…å°”å®šå¾‹è®¡ç®—æŠ˜å°„ç‡çš„æ¯”å€¼ (é€šå¸¸æ˜¯ n1/n2)
 		float eta = rate;
 
-		// ¼ÆËãÕÛÉä½ÇµÄÆ½·½£¬Èç¹û k < 0£¬±íÊ¾¹âÏßÍêÈ«·´Éä£¨È«·´Éä£©
+		// è®¡ç®—æŠ˜å°„è§’çš„å¹³æ–¹ï¼Œå¦‚æœ k < 0ï¼Œè¡¨ç¤ºå…‰çº¿å®Œå…¨åå°„ï¼ˆå…¨åå°„ï¼‰
 		float k = 1.0f - eta * eta * (1.0f - cosI * cosI);
 		if (k < 0.0f)
 			return Vec3f();
@@ -145,8 +145,8 @@ namespace RenderEngine
 			random = Vec3f(randf() * 2.0f - 1.0f, randf() * 2.0f - 1.0f, randf() * 2.0f - 1.0f);
 		} while (dot(random, random) >= 1.0f);
 
-		// ÅĞ¶ÏÊÇ·ñÔÚ·¨ÏßµÄÍ¬Ò»²à
-		if (dot(random, normal) > 0.0f)
+		// åˆ¤æ–­æ˜¯å¦åœ¨æ³•çº¿çš„åŒä¸€ä¾§
+		if (dot(random, normal) < 0.0f)
 			return random;
 
 		return random * -1;

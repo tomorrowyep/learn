@@ -1,4 +1,4 @@
-#include "objadapt.h"
+﻿#include "objadapt.h"
 #include "triangleobj.h"
 
 IObject* ObjAdapt::createObj(const Vec3f* pos, GraphlyType type)

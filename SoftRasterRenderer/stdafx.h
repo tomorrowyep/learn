@@ -1,4 +1,4 @@
-#ifndef __INCLUDE_STDAFX_H__
+﻿#ifndef __INCLUDE_STDAFX_H__
 #define __INCLUDE_STDAFX_H__
 
 #include <algorithm>

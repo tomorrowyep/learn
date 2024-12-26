@@ -1,4 +1,4 @@
-#ifndef __IOBJECT_H__
+ï»¿#ifndef __IOBJECT_H__
 #define __IOBJECT_H__
 
 #include "geometry.h"
@@ -7,67 +7,67 @@
 #define interface struct
 #define PURE =0
 
-// ¶¥µãÊôĞÔ
+// é¡¶ç‚¹å±æ€§
 enum class VertexAttr : int8_t
 {
-    Position = 0, // ¶¥µã×ø±ê
-    Normal,       // ¶¥µã·¨Ïß
-    TexCoord,     // ¶¥µãÎÆÀí×ø±ê
-    Tangent       // ¶¥µãÇĞÏß
+    Position = 0, // é¡¶ç‚¹åæ ‡
+    Normal,       // é¡¶ç‚¹æ³•çº¿
+    TexCoord,     // é¡¶ç‚¹çº¹ç†åæ ‡
+    Tangent       // é¡¶ç‚¹åˆ‡çº¿
 };
 
-// ·¢ÉäµÄ¹âÏß
+// å‘å°„çš„å…‰çº¿
 struct Ray
 {
-	Vec3f startPoint; // Æğµã
-	Vec3f direction;  // ·½Ïò
+	Vec3f startPoint; // èµ·ç‚¹
+	Vec3f direction;  // æ–¹å‘
 };
 
-// ²ÄÖÊ
+// æè´¨
 struct Material
 {
-    bool isEmissive = false;       // ÊÇ·ñ·¢¹â
-    Vec3f normal;                  // ·¨ÏòÁ¿
-    TGAColor color;                // ÑÕÉ«
-    Vec2f texCoords;               // ÎÆÀí×ø±ê
-    float specularRate = 0.0f;     // ·´Éä¹âÕ¼±È
-    float roughness = 1.0f;        // ´Ö²Ú³Ì¶È
-    float refractRate = 0.0f;      // ÕÛÉä¹âÕ¼±È
-    float refractAngle = 1.0f;     // ÕÛÉäÂÊ
-    float refractRoughness = 0.0f; // ÕÛÉä´Ö²Ú¶È
+    bool isEmissive = false;       // æ˜¯å¦å‘å…‰
+    Vec3f normal;                  // æ³•å‘é‡
+    TGAColor color;                // é¢œè‰²
+    Vec2f texCoords;               // çº¹ç†åæ ‡
+    float specularRate = 0.0f;     // åå°„å…‰å æ¯”
+    float roughness = 1.0f;        // ç²—ç³™ç¨‹åº¦
+    float refractRate = 0.0f;      // æŠ˜å°„å…‰å æ¯”
+    float refractAngle = 1.0f;     // æŠ˜å°„ç‡
+    float refractRoughness = 0.0f; // æŠ˜å°„ç²—ç³™åº¦
 };
 
-// ¹âÏßÇó½»½á¹û
+// å…‰çº¿æ±‚äº¤ç»“æœ
 struct HitResult
 {
-    bool isHit = false;             // ÊÇ·ñÃüÖĞ
-    float distance = FLT_MAX;      // Óë½»µãµÄ¾àÀë
-    Vec3f hitPoint;                 // ¹âÏßÃüÖĞµã
-    Material material;              // ÃüÖĞµãµÄ±íÃæ²ÄÖÊ
+    bool isHit = false;             // æ˜¯å¦å‘½ä¸­
+    float distance = FLT_MAX;      // ä¸äº¤ç‚¹çš„è·ç¦»
+    Vec3f hitPoint;                 // å…‰çº¿å‘½ä¸­ç‚¹
+    Material material;              // å‘½ä¸­ç‚¹çš„è¡¨é¢æè´¨
 };
 
 interface IObject
 {
     virtual ~IObject() = default;
 
-    // »ñÈ¡¶¥µã×ø±ê
+    // è·å–é¡¶ç‚¹åæ ‡
 	virtual Vec3f* vertex() PURE;
 
-	// ¼ÆËãÍ¼ÔªÖĞĞÄ
+	// è®¡ç®—å›¾å…ƒä¸­å¿ƒ
     virtual Vec3f center() PURE;
 
-    // ¼ÆËã°üÎ§ºĞÊ¹ÓÃ
+    // è®¡ç®—åŒ…å›´ç›’ä½¿ç”¨
     virtual Vec3f getMinPoint() PURE;
     virtual Vec3f getMaxPoint() PURE;
 
-    // »ñÈ¡²ÄÖÊ
+    // è·å–æè´¨
     virtual Material& getMaterial() PURE;
 
-	// ÉèÖÃ¶¥µãÊôĞÔ
+	// è®¾ç½®é¡¶ç‚¹å±æ€§
     virtual void setVertexAttr(const VertexAttr type, const Vec3f* pVertexAttr) PURE;
     virtual void setVertexAttr(const VertexAttr type, const Vec2f* pVertexAttr) PURE;
 
-	// »ñÈ¡½»µã
+	// è·å–äº¤ç‚¹
     virtual HitResult intersect(const Ray& ray) PURE;
 };
 

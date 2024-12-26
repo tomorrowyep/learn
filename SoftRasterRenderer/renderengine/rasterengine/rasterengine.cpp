@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "common.h"
 #include "rasterengine.h"
 
@@ -56,14 +56,14 @@ void RasterEngine::drawLine(Vec2i start, Vec2i end, TGAColor color)
 void RasterEngine::drawLine(int x0, int y0, int x1, int y1, TGAColor color)
 {
 	bool bSteep = std::abs(x0 - x1) < std::abs(y0 - y1);
-	// ×ª»»µ½ÏñËØµã¸ü¶àµÄÄÇÒ»¸ö·ÖÁ¿
+	// è½¬æ¢åˆ°åƒç´ ç‚¹æ›´å¤šçš„é‚£ä¸€ä¸ªåˆ†é‡
 	if (bSteep)
 	{
 		std::swap(x0, y0);
 		std::swap(x1, y1);
 	}
 
-	// ´Ó×óµ½ÓÒ±éÀú
+	// ä»å·¦åˆ°å³éå†
 	if (x0 > x1)
 	{
 		std::swap(x0, x1);
@@ -72,8 +72,8 @@ void RasterEngine::drawLine(int x0, int y0, int x1, int y1, TGAColor color)
 
 	int dx = x1 - x0;
 	int dy = y1 - y0;
-	int derror2 = std::abs(dy) * 2; //  ±ÜÃâ¸¡µãÔËËã
-	int error2 = 0; // Îó²îÀÛ»ı£¬¾ö¶¨ÊÇ·ñ¸Ä±äyµÄÖµ
+	int derror2 = std::abs(dy) * 2; //  é¿å…æµ®ç‚¹è¿ç®—
+	int error2 = 0; // è¯¯å·®ç´¯ç§¯ï¼Œå†³å®šæ˜¯å¦æ”¹å˜yçš„å€¼
 	int y = y0;
 	for (int x = x0; x <= x1; ++x)
 	{
@@ -93,7 +93,7 @@ void RasterEngine::drawLine(int x0, int y0, int x1, int y1, TGAColor color)
 
 void RasterEngine::drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAColor color)
 {
-	// °´yÖáÅÅĞò
+	// æŒ‰yè½´æ’åº
 	if (v0.y > v1.y)
 		std::swap(v0, v1);
 	if (v0.y > v2.y)
@@ -101,14 +101,14 @@ void RasterEngine::drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAColor color)
 	if (v1.y > v2.y)
 		std::swap(v1, v2);
 
-	// ÍË»¯Èı½ÇĞÎÅĞ¶Ï
+	// é€€åŒ–ä¸‰è§’å½¢åˆ¤æ–­
 	if (v2.y == v0.y) 
 		return;
 
 	float height = v2.y - v0.y;
 
-	// Í¨¹ıÖğĞĞÉ¨Ãèy£¬Í¨¹ı²åÖµÈ·¶¨×óÓÒÁ½±ßµÄ±ß½ç
-	// ·ÖÎªÉÏÏÂÁ½²¿·Ö
+	// é€šè¿‡é€è¡Œæ‰«æyï¼Œé€šè¿‡æ’å€¼ç¡®å®šå·¦å³ä¸¤è¾¹çš„è¾¹ç•Œ
+	// åˆ†ä¸ºä¸Šä¸‹ä¸¤éƒ¨åˆ†
 	auto drawScanLine = [&](Vec3f start, Vec3f end)
 		{
 			float segmentHeight = end.y - start.y;
@@ -134,18 +134,18 @@ void RasterEngine::drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAColor color)
 
 void RasterEngine::drawTriangle(const IShader::VertexInput& input)
 {
-	// ±ØĞëÉèÖÃshader
+	// å¿…é¡»è®¾ç½®shader
 	if (!m_pIShader)
 		return;
 
-	// Ö´ĞĞ¶¥µã×ÅÉ«Æ÷
+	// æ‰§è¡Œé¡¶ç‚¹ç€è‰²å™¨
 	IShader::VertexOutput vertexOutput = _executeVertex(input);
 	if (!vertexOutput.pPos)
 		return;
 
 	Vec3f pVert[3] = { vertexOutput.pPos.value()[0], vertexOutput.pPos.value()[1], vertexOutput.pPos.value()[2] };
 
-	// ¼ÆËã°üÎ§ºĞ£¬¼´×óÉÏºÍÓÒÏÂ
+	// è®¡ç®—åŒ…å›´ç›’ï¼Œå³å·¦ä¸Šå’Œå³ä¸‹
 	Vec2f  leftTop(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
 	Vec2f  rightBottom(0.f, 0.f);
 	Vec2f  clamp(m_width - 1.f, m_height - 1.f);
@@ -159,8 +159,8 @@ void RasterEngine::drawTriangle(const IShader::VertexInput& input)
 		rightBottom.y = std::min(clamp.y, std::max(pVert[i].y, rightBottom.y));
 	}
 
-	// Ö´ĞĞ¹âÕ¤»¯£¬Ö÷Òª¹¦ÄÜÓĞÁ½¸ö£¬È·¶¨ÄÄĞ©ÏñËØÔÚÈı½ÇĞÎÄÚ¡¢²åÖµ¸÷¸ö¶¥µãµÄÊôĞÔ
-	// ±éÀúÔÚ°üÎ§ºĞÖĞµÄÏñËØ£¬ÅĞ¶ÏÊÇ·ñÔÚÈı½ÇĞÎÄÚ
+	// æ‰§è¡Œå…‰æ …åŒ–ï¼Œä¸»è¦åŠŸèƒ½æœ‰ä¸¤ä¸ªï¼Œç¡®å®šå“ªäº›åƒç´ åœ¨ä¸‰è§’å½¢å†…ã€æ’å€¼å„ä¸ªé¡¶ç‚¹çš„å±æ€§
+	// éå†åœ¨åŒ…å›´ç›’ä¸­çš„åƒç´ ï¼Œåˆ¤æ–­æ˜¯å¦åœ¨ä¸‰è§’å½¢å†…
 	Vec3f point;
 	TGAColor color;
 	for (point.x = leftTop.x; point.x <= rightBottom.x; ++point.x)
@@ -171,18 +171,18 @@ void RasterEngine::drawTriangle(const IShader::VertexInput& input)
 			if (barycentric.x < 0 || barycentric.y < 0 || barycentric.z < 0)
 				continue;
 
-			// Í¨¹ıÈı½ÇÖØĞÄ·¨²åÖµ»ñÈ¡µ½pµãÉî¶ÈÖµ
+			// é€šè¿‡ä¸‰è§’é‡å¿ƒæ³•æ’å€¼è·å–åˆ°pç‚¹æ·±åº¦å€¼
 			point.z = pVert[0].z * barycentric[0] + pVert[1].z * barycentric[1] + pVert[2].z * barycentric[2];
-			if (point.z < m_zBuffer[(int)(point.x + point.y * m_width)]) // ÌáÇ°Éî¶È²âÊÔÁË
+			if (point.z < m_zBuffer[(int)(point.x + point.y * m_width)]) // æå‰æ·±åº¦æµ‹è¯•äº†
 			{
-				m_zBuffer[(int)(point.x + point.y * m_width)] = point.z; // ¸üĞÂÉî¶È»º³å
+				m_zBuffer[(int)(point.x + point.y * m_width)] = point.z; // æ›´æ–°æ·±åº¦ç¼“å†²
 
 				IShader::FragmentInput fragInput;
-				fragInput.pPixelVert.emplace(point); // ³õÊ¼»¯pPixelVert
-				_interpolationAttrs(vertexOutput, fragInput, barycentric); // ²åÖµÆäËûÊôĞÔ
+				fragInput.pPixelVert.emplace(point); // åˆå§‹åŒ–pPixelVert
+				_interpolationAttrs(vertexOutput, fragInput, barycentric); // æ’å€¼å…¶ä»–å±æ€§
 
-				if (!m_pIShader->fragment(fragInput, color)) // Ö´ĞĞÆ¬¶Î×ÅÉ«Æ÷£¬Ö÷Òª¾ÍÊÇÈ·¶¨¸ÃÏñËØµÄÑÕÉ«
-					m_pDevice->set((int)(point.x), (int)(point.y), color); // Ö»ÓĞ²»±»¶ªÆúµÄÏñËØ²ÅÌî³äÑÕÉ«
+				if (!m_pIShader->fragment(fragInput, color)) // æ‰§è¡Œç‰‡æ®µç€è‰²å™¨ï¼Œä¸»è¦å°±æ˜¯ç¡®å®šè¯¥åƒç´ çš„é¢œè‰²
+					m_pDevice->set((int)(point.x), (int)(point.y), color); // åªæœ‰ä¸è¢«ä¸¢å¼ƒçš„åƒç´ æ‰å¡«å……é¢œè‰²
 			}
 		}
 	}
@@ -194,21 +194,21 @@ Vec3f RasterEngine::_getBarycentric(const Vec3f* pVert, const Vec3f point)
 	Vec3f AB = pVert[1] - pVert[0];
 	Vec3f AC = pVert[2] - pVert[0];
 
-	// Í¨¹ı²æ³Ë»ñÈ¡ÖØĞÄ×ø±ê, ¶ÔÓ¦[area, u, v]£¬area±íÊ¾Ãæ»ı
+	// é€šè¿‡å‰ä¹˜è·å–é‡å¿ƒåæ ‡, å¯¹åº”[area, u, v]ï¼Œareaè¡¨ç¤ºé¢ç§¯
 	Vec3f barycentric = cross(Vec3f(PA.x, AB.x, AC.x), Vec3f(PA.y, AB.y, AC.y));
 	if ((barycentric.x - 0.f) < 1e-2)
-		return Vec3f(-1, 1, 1); // µÈÓÚ0±íÊ¾ÍË»¯ÎªÖ±Ïß£¬ÎªÎŞĞ§µÄÈı½ÇĞÎ
+		return Vec3f(-1, 1, 1); // ç­‰äº0è¡¨ç¤ºé€€åŒ–ä¸ºç›´çº¿ï¼Œä¸ºæ— æ•ˆçš„ä¸‰è§’å½¢
 
-	// ×ªÎª1-u-v, u, vµÄ±ê×¼¸ñÊ½£¬¼´±ÈÀıÄ£Ê½
+	// è½¬ä¸º1-u-v, u, vçš„æ ‡å‡†æ ¼å¼ï¼Œå³æ¯”ä¾‹æ¨¡å¼
 	return Vec3f(1.f - (barycentric.y + barycentric.z) / barycentric.x, barycentric.y / barycentric.x, barycentric.z / barycentric.x);
 }
 
 void RasterEngine::_transViewportCoords(Vec4f& vec)
 {
-	vec = vec / vec[3]; // Í¸ÊÓ³ı·¨£¬×ª»»µ½NDC
-	vec = m_pIShader->m_viewportMatrix * vec; // ×ªµ½ÊÓ¿Ú×ø±ê
+	vec = vec / vec[3]; // é€è§†é™¤æ³•ï¼Œè½¬æ¢åˆ°NDC
+	vec = m_pIShader->m_viewportMatrix * vec; // è½¬åˆ°è§†å£åæ ‡
 
-	_transAccuracy(vec); // ´¦ÀíÏÂ¾«¶ÈÎÊÌâ
+	_transAccuracy(vec); // å¤„ç†ä¸‹ç²¾åº¦é—®é¢˜
 }
 
 void RasterEngine::_transAccuracy(Vec4f& vec)
@@ -228,7 +228,7 @@ IShader::VertexOutput RasterEngine::_executeVertex(const IShader::VertexInput& i
 	{
 		std::for_each(vertexOutput.pPos.value().begin(), vertexOutput.pPos.value().end(), [this](Vec4f& vec)
 			{
-				_transViewportCoords(vec); // Ö´ĞĞÍ¸ÊÓ³ı·¨²¢×ª»»µ½ÊÓ¿Ú×ø±ê
+				_transViewportCoords(vec); // æ‰§è¡Œé€è§†é™¤æ³•å¹¶è½¬æ¢åˆ°è§†å£åæ ‡
 			});
 	}
 
@@ -239,7 +239,7 @@ void RasterEngine::_interpolationAttrs(IShader::VertexOutput& vertexOutput, ISha
 {
 	if (vertexOutput.pTexCoord)
 	{
-		// ²åÖµ»ñÈ¡µ½ÎÆÀí×ø±ê
+		// æ’å€¼è·å–åˆ°çº¹ç†åæ ‡
 		Vec2f* uv = vertexOutput.pTexCoord.value().data();
 		Vec2f pixelUV = uv[0] * barycentric[0] + uv[1] * barycentric[1] + uv[2] * barycentric[2];
 
@@ -249,7 +249,7 @@ void RasterEngine::_interpolationAttrs(IShader::VertexOutput& vertexOutput, ISha
 
 	if (vertexOutput.pNorm)
 	{
-		// ²åÖµ»ñÈ¡µ½·¨Ïß×ø±ê
+		// æ’å€¼è·å–åˆ°æ³•çº¿åæ ‡
 		Vec3f* norm = vertexOutput.pNorm.value().data();
 		Vec3f pixelNorm = norm[0] * barycentric[0] + norm[1] * barycentric[1] + norm[2] * barycentric[2];
 
@@ -259,7 +259,7 @@ void RasterEngine::_interpolationAttrs(IShader::VertexOutput& vertexOutput, ISha
 
 	if (vertexOutput.pTangent)
 	{
-		// ²åÖµÇĞÏßÓë¸±ÇĞÏß
+		// æ’å€¼åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
 		auto& [tangent, bitangent] = vertexOutput.pTangent.value();
 		tangent = tangent * barycentric[0] + tangent * barycentric[1] + tangent * barycentric[2];
 		bitangent = bitangent * barycentric[0] + bitangent * barycentric[1] + bitangent * barycentric[2];

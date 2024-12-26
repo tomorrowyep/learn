@@ -1,9 +1,9 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "imodel.h"
 #include "objfilemodel.h"
 #include "threadpool.h"
 
-namespace 
+namespace
 {
 	enum class FileType : unsigned int
 	{
@@ -16,7 +16,7 @@ namespace
 		static const std::unordered_map<std::string, FileType> extensionMap
 		{
 			{".obj", FileType::ObjFile}
-			// ĞÂÌí¼ÓµÄĞ´ÔÚºóÃæ
+			// æ–°æ·»åŠ çš„å†™åœ¨åé¢
 		};
 
 		auto item = extensionMap.find(path.extension().string());

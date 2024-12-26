@@ -1,4 +1,4 @@
-#ifndef __THREADPOOL_H__
+О╩©#ifndef __THREADPOOL_H__
 #define __THREADPOOL_H__
 
 #include <atomic>
@@ -11,7 +11,7 @@
 #include <functional>
 #include <memory>
 
-// TODO:тЖ╪схннЯ╣дсеох╪╤рт╪╟ж╖Ёжх║оШхннЯ
+// TODO:Е╒·Е┼═Д╩╩Е┼║Г └Д╪≤Е┘┬Г╨╖Д╩╔Е▐┼Ф■╞Ф▄│Е▐√Ф╤┬Д╩╩Е┼║
 class ThreadPool
 {
 public:
@@ -79,7 +79,7 @@ private:
 							if (m_taskQue.empty())
 								m_cond.wait(locker, [this] { return !m_taskQue.empty() || m_bIsStop.load(); });
 
-							// ╣╠мёж╧й╠сжц╩спхннЯ╬м©иртмкЁЖак
+							// Е╫⌠Е│°Ф╜╒Ф≈╤Е▐┬Ф╡║Ф°┴Д╩╩Е┼║Е╟╠Е▐╞Д╩╔И──Е┤╨Д╨├
 							if (m_taskQue.empty())
 								return;
 

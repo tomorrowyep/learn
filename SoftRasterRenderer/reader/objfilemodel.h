@@ -1,4 +1,4 @@
-#ifndef __OBJFILEMODEL_H__
+﻿#ifndef __OBJFILEMODEL_H__
 #define __OBJFILEMODEL_H__
 
 #include <filesystem>

@@ -1,4 +1,4 @@
-#ifndef __ISHADER_H__
+ï»¿#ifndef __ISHADER_H__
 #define __ISHADER_H__
 
 #include <unordered_map>
@@ -16,51 +16,51 @@ enum class TextureType : int8_t
 	Diffuse = 0,
 	Norm,
 	Specular,
-	// »¹ÓĞ¾ÍÍùºóÃæ¼Ó
+	// è¿˜æœ‰å°±å¾€åé¢åŠ 
 };
 
-// ÓÃ»§ĞèÒª×Ô¶¨Òå×ÅÉ«Æ÷£¬Í¨¹ısetShader½Ó¿ÚÉèÖÃ×ÅÉ«Æ÷
-// ÔÚµ÷ÓÃdrawTriangleµÄÊ±ºò´«ÈëVertexInput¼´¿É
+// ç”¨æˆ·éœ€è¦è‡ªå®šä¹‰ç€è‰²å™¨ï¼Œé€šè¿‡setShaderæ¥å£è®¾ç½®ç€è‰²å™¨
+// åœ¨è°ƒç”¨drawTriangleçš„æ—¶å€™ä¼ å…¥VertexInputå³å¯
 interface IShader
 {
     using TextureContainer = std::unordered_map<TextureType, std::unique_ptr<TGAImage>>;
 
-    // ¶¥µã×ÅÉ«Æ÷ÊäÈë¶¼ÊÇÒ»×é¶¥µãÊı¾İ£¬Èı½ÇĞÎµÄÈı¸ö¶¥µã
+    // é¡¶ç‚¹ç€è‰²å™¨è¾“å…¥éƒ½æ˜¯ä¸€ç»„é¡¶ç‚¹æ•°æ®ï¼Œä¸‰è§’å½¢çš„ä¸‰ä¸ªé¡¶ç‚¹
     struct VertexInput
     {
-        std::optional<std::array<Vec3f, 3>> pVert; // Èı½ÇĞÎ¶¥µãÎ»ÖÃÊôĞÔ, ±ØĞëÉèÖÃ
-        std::optional<std::array<Vec2f, 3>> pUV; // Èı½ÇĞÎ¶¥µãÎÆÀíÊôĞÔ£¬Ñ¡ÔñĞÔÉèÖÃ
-        std::optional<std::array<Vec3f, 3>> pNorm; // Èı½ÇĞÎ¶¥µã·¨ÏßÊôĞÔ£¬Ñ¡ÔñĞÔÉèÖÃ
-        std::optional<std::tuple<Vec3f, Vec3f>> pTangent; // Èı½ÇĞÎµÄÇĞÏßÓë¸±ÇĞÏß£¬Ò»¸öÈı½ÇĞÎ¹«ÓÃÒ»×é
-        // ÏÈ°üÀ¨Õâ¼¸¸ö³£ÓÃµÄ°É
+        std::optional<std::array<Vec3f, 3>> pVert; // ä¸‰è§’å½¢é¡¶ç‚¹ä½ç½®å±æ€§, å¿…é¡»è®¾ç½®
+        std::optional<std::array<Vec2f, 3>> pUV; // ä¸‰è§’å½¢é¡¶ç‚¹çº¹ç†å±æ€§ï¼Œé€‰æ‹©æ€§è®¾ç½®
+        std::optional<std::array<Vec3f, 3>> pNorm; // ä¸‰è§’å½¢é¡¶ç‚¹æ³•çº¿å±æ€§ï¼Œé€‰æ‹©æ€§è®¾ç½®
+        std::optional<std::tuple<Vec3f, Vec3f>> pTangent; // ä¸‰è§’å½¢çš„åˆ‡çº¿ä¸å‰¯åˆ‡çº¿ï¼Œä¸€ä¸ªä¸‰è§’å½¢å…¬ç”¨ä¸€ç»„
+        // å…ˆåŒ…æ‹¬è¿™å‡ ä¸ªå¸¸ç”¨çš„å§
     };
 
     struct VertexOutput
     {
-        std::optional<std::array<Vec4f, 3>> pPos; // ²Ã¼ô¿Õ¼äÎ»ÖÃ
-        std::optional<std::array<Vec2f, 3>> pTexCoord; // ÎÆÀíÊôĞÔ£¨²»ĞèÒª×ª»»£©
-        std::optional<std::array<Vec3f, 3>> pNorm; // ×ª»»ºóµÄ·¨Ïß×ø±ê
+        std::optional<std::array<Vec4f, 3>> pPos; // è£å‰ªç©ºé—´ä½ç½®
+        std::optional<std::array<Vec2f, 3>> pTexCoord; // çº¹ç†å±æ€§ï¼ˆä¸éœ€è¦è½¬æ¢ï¼‰
+        std::optional<std::array<Vec3f, 3>> pNorm; // è½¬æ¢åçš„æ³•çº¿åæ ‡
         std::optional<std::tuple<Vec3f, Vec3f>> pTangent;
     };
 
-    // Æ¬¶Î×ÅÉ«Æ÷ÊäÈë¶¼ÊÇµ¥¸öÆ¬¶Î£¨ÔªËØµÄÊı¾İ£©
+    // ç‰‡æ®µç€è‰²å™¨è¾“å…¥éƒ½æ˜¯å•ä¸ªç‰‡æ®µï¼ˆå…ƒç´ çš„æ•°æ®ï¼‰
     struct FragmentInput
     {
-        std::optional<Vec3f> pPixelVert; // Æ¬¶Î²åÖµºóµÄÎ»ÖÃÊôĞÔ
-        std::optional<Vec2f> pPixeUV; // Æ¬¶Î²åÖµºóÎÆÀíÊôĞÔ
-        std::optional<Vec3f> pPixeNorm; // Æ¬¶Î²åÖµºó·¨ÏßÊôĞÔ
+        std::optional<Vec3f> pPixelVert; // ç‰‡æ®µæ’å€¼åçš„ä½ç½®å±æ€§
+        std::optional<Vec2f> pPixeUV; // ç‰‡æ®µæ’å€¼åçº¹ç†å±æ€§
+        std::optional<Vec3f> pPixeNorm; // ç‰‡æ®µæ’å€¼åæ³•çº¿å±æ€§
         std::optional<std::tuple<Vec3f, Vec3f>> pPixelTangent;
     };
 
     virtual ~IShader() {};
 
-    // ¶¥µã×ÅÉ«Æ÷µÄÖ÷Òª¹¦ÄÜÊÇ×ø±ê×ª»»£¬Ò»°ãÇ¿ÖÆÊä³öÎ»ÖÃ×ø±ê£¨Î»ÓÚ²Ã¼ô×ø±êÏµ£©
-    // ÊäÈëÒ»×éÈı½ÇĞÎµÄ¶¥µãÊôĞÔ£¬Êä³ö¾­¹ı×ø±ê×ª»»ºóµÄÒ»×é¶¥µãÊôĞÔ
+    // é¡¶ç‚¹ç€è‰²å™¨çš„ä¸»è¦åŠŸèƒ½æ˜¯åæ ‡è½¬æ¢ï¼Œä¸€èˆ¬å¼ºåˆ¶è¾“å‡ºä½ç½®åæ ‡ï¼ˆä½äºè£å‰ªåæ ‡ç³»ï¼‰
+    // è¾“å…¥ä¸€ç»„ä¸‰è§’å½¢çš„é¡¶ç‚¹å±æ€§ï¼Œè¾“å‡ºç»è¿‡åæ ‡è½¬æ¢åçš„ä¸€ç»„é¡¶ç‚¹å±æ€§
     virtual VertexOutput vertex(VertexInput vertexInput) PURE;
 
-    // Æ¬¶Î×ÅÉ«Æ÷µÄÖ÷Òª¹¦ÄÜÊÇ¼ÆËãÑÕÉ«
-    // ÊäÈë¾­¹ı²åÖµ¹ıºóµÄÆ¬¶ÎÊôĞÔ£¬Êä³ö×îºóµÄÑÕÉ«Öµ
-    // ·µ»ØÖµ±íÊ¾ÊÇ·ñ¶ªÆú¸ÃÆ¬¶Î£¬true±íÊ¾¶ªÆú¸ÃÆ¬¶Î
+    // ç‰‡æ®µç€è‰²å™¨çš„ä¸»è¦åŠŸèƒ½æ˜¯è®¡ç®—é¢œè‰²
+    // è¾“å…¥ç»è¿‡æ’å€¼è¿‡åçš„ç‰‡æ®µå±æ€§ï¼Œè¾“å‡ºæœ€åçš„é¢œè‰²å€¼
+    // è¿”å›å€¼è¡¨ç¤ºæ˜¯å¦ä¸¢å¼ƒè¯¥ç‰‡æ®µï¼Œtrueè¡¨ç¤ºä¸¢å¼ƒè¯¥ç‰‡æ®µ
     virtual bool fragment(FragmentInput fragAttrs, TGAColor& outColor) PURE;
 
     virtual void setTexture(TGAImage* img, TextureType type)
@@ -71,14 +71,14 @@ interface IShader
 
     virtual void setTexture(TGAImage&& img, TextureType type)
     {
-        // ÓÒÖµÒıÓÃ±¾ÉíÊÇ¸ö×óÖµ£¬ĞèÒªÔÙ´Î×ªÎªÓÒÖµ£¨º¯Êı·µ»ØÓÒÖµÒıÓÃÊôÓÚ½«ÍöÖµ£©
+        // å³å€¼å¼•ç”¨æœ¬èº«æ˜¯ä¸ªå·¦å€¼ï¼Œéœ€è¦å†æ¬¡è½¬ä¸ºå³å€¼ï¼ˆå‡½æ•°è¿”å›å³å€¼å¼•ç”¨å±äºå°†äº¡å€¼ï¼‰
         TGAImage* data = new TGAImage(std::move(img));
         m_texs.insert(std::make_pair(type, data));
     }
 
     virtual TGAColor getTexture(const Vec2f uv, TextureType type)
     {
-        // »ñÈ¡ÎÆÀí
+        // è·å–çº¹ç†
         TGAColor color;
         auto itemTex = m_texs.find(type);
         if (itemTex != m_texs.end())
@@ -87,14 +87,14 @@ interface IShader
         return color;
     }
 
-    // ÊÓÍ¼×ª»»Ïà¹Ø£¬Ä¬ÈÏÎªµ¥Î»¾ØÕó
-    Matrix m_modeMatrix; // ÊÀ½ç×ø±ê
-    Matrix m_viewMatrix; // Ïà»ú£¨ÊÓ½Ç£©×ø±ê
-    Matrix m_proMatrix; // ²Ã¼ô×ø±ê->Õı½»¡¢Í¸ÊÓ
-    Matrix m_viewportMatrix; // ÊÓ¿Ú×ø±ê
+    // è§†å›¾è½¬æ¢ç›¸å…³ï¼Œé»˜è®¤ä¸ºå•ä½çŸ©é˜µ
+    Matrix m_modeMatrix; // ä¸–ç•Œåæ ‡
+    Matrix m_viewMatrix; // ç›¸æœºï¼ˆè§†è§’ï¼‰åæ ‡
+    Matrix m_proMatrix; // è£å‰ªåæ ‡->æ­£äº¤ã€é€è§†
+    Matrix m_viewportMatrix; // è§†å£åæ ‡
 
 private:
-    // ´æ´¢ÎÆÀí
+    // å­˜å‚¨çº¹ç†
     TextureContainer m_texs;
 };
 

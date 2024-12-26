@@ -1,4 +1,4 @@
-#ifndef __TRIANGLEOBJ_H__
+ï»¿#ifndef __TRIANGLEOBJ_H__
 #define __TRIANGLEOBJ_H__
 
 #include "iobject.h"
@@ -6,7 +6,7 @@
 class TriangleObj : public IObject
 {
 public:
-	TriangleObj() = delete; // ²»Ö§³ÖÄ¬ÈÏ¹¹Ôì
+	TriangleObj() = delete; // ä¸æ”¯æŒé»˜è®¤æ„é€ 
 
     TriangleObj(const Vec3f* pVertex);
     TriangleObj(const TriangleObj& other);
@@ -16,7 +16,7 @@ public:
 
     Vec3f center() override;
 
-    // ¼ÆËã°üÎ§ºĞÊ¹ÓÃ
+    // è®¡ç®—åŒ…å›´ç›’ä½¿ç”¨
     Vec3f getMinPoint() override;
     Vec3f getMaxPoint() override;
 
@@ -31,12 +31,12 @@ private:
     Vec3f _getBarycentric(const Vec3f& point);
 
 private:
-    std::unique_ptr<Vec3f[]> m_pVertexs; // Èı½ÇĞÎµÄÈı¸ö¶¥µã
-    std::unique_ptr<Vec3f[]> m_pNormals; // Èı½ÇĞÎ¸÷¶¥µãµÄ·¨Ïß
-    std::unique_ptr<Vec2f[]> m_pTexCoords; // Èı½ÇĞÎ¸÷¶¥µãµÄ·¨Ïß
-    std::tuple<Vec3f, Vec3f> m_tangent; // Èı½ÇĞÎµÄÇĞÏßÓë¸±ÇĞÏß
+    std::unique_ptr<Vec3f[]> m_pVertexs; // ä¸‰è§’å½¢çš„ä¸‰ä¸ªé¡¶ç‚¹
+    std::unique_ptr<Vec3f[]> m_pNormals; // ä¸‰è§’å½¢å„é¡¶ç‚¹çš„æ³•çº¿
+    std::unique_ptr<Vec2f[]> m_pTexCoords; // ä¸‰è§’å½¢å„é¡¶ç‚¹çš„æ³•çº¿
+    std::tuple<Vec3f, Vec3f> m_tangent; // ä¸‰è§’å½¢çš„åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
 
-    Material m_material; // Èı½ÇĞÎµÄ²ÄÖÊ
+    Material m_material; // ä¸‰è§’å½¢çš„æè´¨
 };
 
 #endif // !__TRIANGLEOBJ_H__

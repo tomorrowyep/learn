@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "threadpool.h"
 #include "raytraceengine.h"
 #include "common.h"
@@ -16,7 +16,7 @@ namespace
 RayTraceEngine::RayTraceEngine()
 {
 	m_pSceneManager = std::make_unique<SceneManager>();
-	m_sampleWeight = (2.0f * PI) * (1.0f / m_sampleCount);// Ã¿´Î²ÉÑùµÄÈ¨ÖØ£¬Æ½¾ùÒ»ÏÂ
+	m_sampleWeight = (2.0f * PI) * (1.0f / m_sampleCount);// æ¯æ¬¡é‡‡æ ·çš„æƒé‡ï¼Œå¹³å‡ä¸€ä¸‹
 }
 
 Matrix RayTraceEngine::lookat(Vec3f cameraPos, Vec3f target, Vec3f up)
@@ -114,12 +114,12 @@ void RayTraceEngine::buildBVH(int count)
 void RayTraceEngine::setSampleCount(int count)
 {
 	m_sampleCount = count;
-	m_sampleWeight = (2.0f * PI) * (1.0f / m_sampleCount);// Ã¿´Î²ÉÑùµÄÈ¨ÖØ£¬Æ½¾ùÒ»ÏÂ
+	m_sampleWeight = (2.0f * PI) * (1.0f / m_sampleCount);// æ¯æ¬¡é‡‡æ ·çš„æƒé‡ï¼Œå¹³å‡ä¸€ä¸‹
 }
 
 void RayTraceEngine::rayGeneration(const ExecutexType type)
 {
-	// ²¢ĞĞäÖÈ¾
+	// å¹¶è¡Œæ¸²æŸ“
 	if (type == ExecutexType::Asynchronous)
 	{
 		_syncRayGeneration();
@@ -133,31 +133,31 @@ void RayTraceEngine::rayGeneration(const ExecutexType type)
 		{
 			for (int col = 0; col < m_width; ++col)
 			{
-				// ×ª»»µ½NDC×ø±ê
+				// è½¬æ¢åˆ°NDCåæ ‡
 				float clipRow = 2.f * row / m_height - 1.f;
 				float clipCol = 2.f * col / m_width - 1.f;
 
-				// ÒıÈëËæ»ú²ÉÑù£¬¼õÉÙ¾â³İ
+				// å¼•å…¥éšæœºé‡‡æ ·ï¼Œå‡å°‘é”¯é½¿
 				clipRow += (RenderEngine::randf() - 0.5f) / m_height;
 				clipCol += (RenderEngine::randf() - 0.5f) / m_width;
 				clipRow = std::clamp(clipRow, -1.f, 1.f);
 				clipCol = std::clamp(clipCol, -1.f, 1.f);
 
-				// ÕâÀï×¢Òâ£¬col¶ÔÓ¦µÄÊÇyÖá£¬row¶ÔÓ¦µÄÊÇxÖá
-				Vec4f projPos{ clipCol * m_near, clipRow * m_near, -m_near, m_near }; // ¶¼ÊÇ´Ó½ü²Ã¼ôÃæ·¢ÉäµÄ
+				// è¿™é‡Œæ³¨æ„ï¼Œcolå¯¹åº”çš„æ˜¯yè½´ï¼Œrowå¯¹åº”çš„æ˜¯xè½´
+				Vec4f projPos{ clipCol * m_near, clipRow * m_near, -m_near, m_near }; // éƒ½æ˜¯ä»è¿‘è£å‰ªé¢å‘å°„çš„
 
-				// Éú³É¹âÏß
+				// ç”Ÿæˆå…‰çº¿
 				Ray ray;
 				ray.startPoint = m_pSceneManager->projTransform2World(projPos);
 				ray.direction = Vec3f(ray.startPoint - cameraPos).normalize();
 
-				// Çó½»µã
+				// æ±‚äº¤ç‚¹
 				HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
 				//HitResult hitRes = m_pSceneManager->closestHit(ray);
 				TGAColor tgaColor;
 				if (hitRes.isHit)
 				{
-					// ÃüÖĞ¹âÔ´Ö±½Ó·µ»Ø¹âÔ´ÑÕÉ«
+					// å‘½ä¸­å…‰æºç›´æ¥è¿”å›å…‰æºé¢œè‰²
 					if (hitRes.material.isEmissive)
 					{
 						tgaColor = hitRes.material.color;
@@ -168,28 +168,30 @@ void RayTraceEngine::rayGeneration(const ExecutexType type)
 						randomRay.startPoint = hitRes.hitPoint;
 						randomRay.direction = RenderEngine::randomDirection(hitRes.material.normal).normalize();
 
-						// ¸ù¾İ·´ÉäÂÊ¾ö¶¨¹âÏß×îÖÕµÄ·½Ïò
+						// æ ¹æ®åå°„ç‡å†³å®šå…‰çº¿æœ€ç»ˆçš„æ–¹å‘
 						float r = RenderEngine::randf();
 						if (r < hitRes.material.specularRate)
 						{
-							// ¾µÃæ·´Éä
+							// é•œé¢åå°„
+							randomRay.direction = randomRay.direction * -1;
 							Vec3f ref = RenderEngine::reflect(hitRes.material.normal, ray.direction).normalize();
 							randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.roughness);
 							tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 						}
 						else if (hitRes.material.specularRate <= r && r <= hitRes.material.refractRate)
 						{
-							// ÕÛÉä
+							// æŠ˜å°„
 							Vec3f ref = RenderEngine::refract(ray.direction, hitRes.material.normal, hitRes.material.refractAngle).normalize();
-							randomRay.direction = RenderEngine::mix(ref, randomRay.direction * -1, hitRes.material.refractRoughness);
+							randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.refractRoughness);
 							tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 						}
 						else
 						{
-							// Âş·´Éä
+							// æ¼«åå°„
+							randomRay.direction = randomRay.direction * -1;
 							tgaColor = m_pSceneManager->getTGATexture("diffuse", hitRes.material.texCoords);
 							TGAColor ptColor = m_pSceneManager->pathTracing(randomRay, 0);
-							tgaColor = ptColor * tgaColor; // ºÍÔ­ÑÕÉ«»ìºÏ
+							tgaColor = ptColor * tgaColor; // å’ŒåŸé¢œè‰²æ··åˆ
 						}
 						tgaColor = tgaColor * m_sampleWeight;
 					}
@@ -205,20 +207,20 @@ void RayTraceEngine::_syncRayGeneration()
 {
 	Vec3f cameraPos = m_pSceneManager->getCameraPos();
 
-	// »®·ÖÃ¿¸öÏß³ÌĞèÒªÍê³ÉµÄĞĞÊı
+	// åˆ’åˆ†æ¯ä¸ªçº¿ç¨‹éœ€è¦å®Œæˆçš„è¡Œæ•°
 	ThreadPool& threadPool = ThreadPool::instance();
 	int threadCount = threadPool.idleThreadCount();
-	int taskSize = std::max(1, m_height / threadCount); // ÈÎÎñ´óĞ¡ÖÁÉÙÎª 1 ĞĞ
-	int totalTasks = (m_height + taskSize - 1) / taskSize; // ÏòÉÏÈ¡Õû£¬È·±£Ã¿ĞĞ¶¼±»äÖÈ¾
+	int taskSize = std::max(1, m_height / threadCount); // ä»»åŠ¡å¤§å°è‡³å°‘ä¸º 1 è¡Œ
+	int totalTasks = (m_height + taskSize - 1) / taskSize; // å‘ä¸Šå–æ•´ï¼Œç¡®ä¿æ¯è¡Œéƒ½è¢«æ¸²æŸ“
 
 	std::vector<std::future<void>> taskFutures;
 	for (int taskIndex = 0; taskIndex < totalTasks; ++taskIndex)
 	{
-		// ¼ÆËãµ±Ç°ÈÎÎñ¸ºÔğµÄĞĞ·¶Î§
+		// è®¡ç®—å½“å‰ä»»åŠ¡è´Ÿè´£çš„è¡ŒèŒƒå›´
 		int startRow = taskIndex * taskSize;
-		int endRow = std::min(startRow + taskSize, m_height); // ²»Òª³¬³ö m_height
+		int endRow = std::min(startRow + taskSize, m_height); // ä¸è¦è¶…å‡º m_height
 
-		// ½«ÈÎÎñÌá½»µ½Ïß³Ì³Ø£¬´«Èë startRow ºÍ endRow
+		// å°†ä»»åŠ¡æäº¤åˆ°çº¿ç¨‹æ± ï¼Œä¼ å…¥ startRow å’Œ endRow
 		auto future = threadPool.commit([=]
 			{
 				for (int count = 0; count < m_sampleCount; ++count)
@@ -227,25 +229,25 @@ void RayTraceEngine::_syncRayGeneration()
 					{
 						for (int col = 0; col < m_width; ++col)
 						{
-							// ×ª»»µ½NDC×ø±ê
+							// è½¬æ¢åˆ°NDCåæ ‡
 							float clipRow = 2.f * row / m_height - 1.f;
 							float clipCol = 2.f * col / m_width - 1.f;
 
-							// ÒıÈëËæ»ú²ÉÑù£¬¼õÉÙ¾â³İ
+							// å¼•å…¥éšæœºé‡‡æ ·ï¼Œå‡å°‘é”¯é½¿
 							clipRow += (RenderEngine::randf() - 0.5f) / m_height;
 							clipCol += (RenderEngine::randf() - 0.5f) / m_width;
 							clipRow = std::clamp(clipRow, -1.f, 1.f);
 							clipCol = std::clamp(clipCol, -1.f, 1.f);
 
-							// ÕâÀï×¢Òâ£¬col¶ÔÓ¦µÄÊÇyÖá£¬row¶ÔÓ¦µÄÊÇxÖá
-							Vec4f projPos{ clipCol * m_near, clipRow * m_near, -m_near, m_near }; // ¶¼ÊÇ´Ó½ü²Ã¼ôÃæ·¢ÉäµÄ
+							// è¿™é‡Œæ³¨æ„ï¼Œcolå¯¹åº”çš„æ˜¯yè½´ï¼Œrowå¯¹åº”çš„æ˜¯xè½´
+							Vec4f projPos{ clipCol * m_near, clipRow * m_near, -m_near, m_near }; // éƒ½æ˜¯ä»è¿‘è£å‰ªé¢å‘å°„çš„
 
-							// Éú³É¹âÏß
+							// ç”Ÿæˆå…‰çº¿
 							Ray ray;
 							ray.startPoint = m_pSceneManager->projTransform2World(projPos);
 							ray.direction = Vec3f(ray.startPoint - cameraPos).normalize();
 
-							// Çó½»µã
+							// æ±‚äº¤ç‚¹
 							HitResult hitRes = m_pSceneManager->closestHitByBVH(ray);
 							//HitResult hitRes = m_pSceneManager->closestHit(ray);
 							TGAColor tgaColor;
@@ -264,6 +266,7 @@ void RayTraceEngine::_syncRayGeneration()
 									float r = RenderEngine::randf();
 									if (r < hitRes.material.specularRate)
 									{
+										randomRay.direction = randomRay.direction * -1;
 										Vec3f ref = RenderEngine::reflect(hitRes.material.normal, ray.direction).normalize();
 										randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.roughness);
 										tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
@@ -271,15 +274,16 @@ void RayTraceEngine::_syncRayGeneration()
 									else if (hitRes.material.specularRate <= r && r <= hitRes.material.refractRate)
 									{
 										Vec3f ref = RenderEngine::refract(ray.direction, hitRes.material.normal, hitRes.material.refractAngle).normalize();
-										randomRay.direction = RenderEngine::mix(ref, randomRay.direction * -1, hitRes.material.refractRoughness);
+										randomRay.direction = RenderEngine::mix(ref, randomRay.direction, hitRes.material.refractRoughness);
 										tgaColor = m_pSceneManager->pathTracing(randomRay, 0);
 									}
 									else
 									{
-										// Âş·´Éä
+										// æ¼«åå°„
+										randomRay.direction = randomRay.direction * -1;
 										tgaColor = m_pSceneManager->getTGATexture("diffuse", hitRes.material.texCoords);
 										TGAColor ptColor = m_pSceneManager->pathTracing(randomRay, 0);
-										tgaColor = ptColor * tgaColor; // ºÍÔ­ÑÕÉ«»ìºÏ
+										tgaColor = ptColor * tgaColor; // å’ŒåŸé¢œè‰²æ··åˆ
 									}
 									tgaColor = tgaColor * m_sampleWeight;
 								}
@@ -294,7 +298,7 @@ void RayTraceEngine::_syncRayGeneration()
 		taskFutures.push_back(std::move(future));
 	}
 
-	// µÈ´ıËùÓĞÈÎÎñÍê³É
+	// ç­‰å¾…æ‰€æœ‰ä»»åŠ¡å®Œæˆ
 	for (auto& future : taskFutures)
 	{
 		future.get();

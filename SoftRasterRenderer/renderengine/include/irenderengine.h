@@ -1,4 +1,4 @@
-#ifndef __IRENDERENGINE_H__
+ï»¿#ifndef __IRENDERENGINE_H__
 #define __IRENDERENGINE_H__
 
 #include "ishader.h"
@@ -28,40 +28,40 @@ interface IRenderEngin
 {
 	virtual ~IRenderEngin() = default;
 
-    // ÊÓÍ¼×ª»»Ïà¹Ø
+    // è§†å›¾è½¬æ¢ç›¸å…³
     virtual Matrix lookat(Vec3f cameraPos, Vec3f target, Vec3f up) PURE;
     virtual Matrix ortho(float left, float right, float bottom, float top, float near, float far) PURE;
     virtual Matrix ortho(Vec2f width, Vec2f height, float near, float far) PURE;
     virtual Matrix perspective(float fov, float aspect, float near, float far) PURE;
     virtual Matrix viewport(int width, int height) PURE;
 
-    // ¼ÆËãÇĞÏßÓë¸±ÇĞÏß
+    // è®¡ç®—åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
     virtual std::tuple<Vec3f, Vec3f> computeTangentSpace(const Vec3f* pos, const Vec2f* uv) PURE;
-    // ÉèÖÃÄ¿±êÉè±¸
+    // è®¾ç½®ç›®æ ‡è®¾å¤‡
     virtual void setDevice(TGAImage* device) PURE;
 };
 
-// ¹âÕ¤äÖÈ¾ÒıÇæ
+// å…‰æ …æ¸²æŸ“å¼•æ“
 interface IRasterRenderEngin : public IRenderEngin
 {
-	// ÉèÖÃ×ÅÉ«Æ÷
+	// è®¾ç½®ç€è‰²å™¨
     virtual void setShader(IShader* pIShader) PURE;
 
-    // »æÖÆÖ±Ïß
+    // ç»˜åˆ¶ç›´çº¿
     virtual void drawLine(Vec2i start, Vec2i end, TGAColor color) PURE;
     virtual void drawLine(int x0, int y0, int x1, int y1, TGAColor color) PURE;
 
-    // É¨ÏßËã·¨Ìî³äÈı½ÇĞÎ
+    // æ‰«çº¿ç®—æ³•å¡«å……ä¸‰è§’å½¢
     virtual void drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAColor color) PURE;
 
-    // ÖØĞÄËã·¨Ìî³äÈı½ÇĞÎ
+    // é‡å¿ƒç®—æ³•å¡«å……ä¸‰è§’å½¢
     virtual void drawTriangle(const IShader::VertexInput& input) PURE;
 };
 
-// ¹âÏß×·×ÙäÖÈ¾ÒıÇæ
+// å…‰çº¿è¿½è¸ªæ¸²æŸ“å¼•æ“
 interface IRayTraceRenderEngin : public IRenderEngin
 {
-    // ÉèÖÃ³¡¾°
+    // è®¾ç½®åœºæ™¯
     virtual IObject* createObj(const Vec3f* pos) PURE;
     virtual void addObj(IObject* obj) PURE;
     virtual void addLight(IObject* pos, const Vec3f& color) PURE;
@@ -69,16 +69,16 @@ interface IRayTraceRenderEngin : public IRenderEngin
     virtual void setTexture(const std::string& texName, TGAImage&& img) PURE;
     virtual void setModeMatrix(const Matrix& mode) PURE;
 
-	// ¹¹½¨BVH¼ÓËÙ½á¹¹£¨Ä¬ÈÏ²ÉÓÃSAH¹¹½¨£©£¬Ö¸¶¨Ò¶×Ó½Úµã´æ´¢µÄÈı½ÇĞÎ¸öÊı
+	// æ„å»ºBVHåŠ é€Ÿç»“æ„ï¼ˆé»˜è®¤é‡‡ç”¨SAHæ„å»ºï¼‰ï¼ŒæŒ‡å®šå¶å­èŠ‚ç‚¹å­˜å‚¨çš„ä¸‰è§’å½¢ä¸ªæ•°
 	virtual void buildBVH(int count) PURE;
 
-    // ÉèÖÃ²ÉÑù´ÎÊı
+    // è®¾ç½®é‡‡æ ·æ¬¡æ•°
     virtual void setSampleCount(int count) PURE;
 
-    // ÉèÖÃ¹âÏß×·×ÙµÄ×î´óÉî¶È
+    // è®¾ç½®å…‰çº¿è¿½è¸ªçš„æœ€å¤§æ·±åº¦
     virtual void setMaxDepth(int depth) PURE;
 
-    // ¿ªÊ¼äÖÈ¾
+    // å¼€å§‹æ¸²æŸ“
     virtual void rayGeneration(const ExecutexType type = ExecutexType::Synchronous) PURE;
 };
 

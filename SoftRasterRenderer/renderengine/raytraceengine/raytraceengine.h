@@ -1,4 +1,4 @@
-#ifndef __RAYTRACEENGINE_H__
+ï»¿#ifndef __RAYTRACEENGINE_H__
 #define __RAYTRACEENGINE_H__
 
 #include "irenderengine.h"
@@ -13,19 +13,19 @@ public:
 	RayTraceEngine();
 	~RayTraceEngine() = default;
 
-	// ÊÓÍ¼×ª»»Ïà¹Ø
+	// è§†å›¾è½¬æ¢ç›¸å…³
 	virtual Matrix lookat(Vec3f cameraPos, Vec3f target, Vec3f up) override;
 	virtual Matrix ortho(float left, float right, float bottom, float top, float near, float far) override;
 	virtual Matrix ortho(Vec2f width, Vec2f height, float near, float far) override;
 	virtual Matrix perspective(float fov, float aspect, float near, float far) override;
 	virtual Matrix viewport(int width, int height) override;
 
-	// ¼ÆËãÇĞÏßÓë¸±ÇĞÏß
+	// è®¡ç®—åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
 	virtual std::tuple<Vec3f, Vec3f> computeTangentSpace(const Vec3f* pos, const Vec2f* uv) override;
 
 	virtual void setDevice(TGAImage* device) override;
 
-	// ÉèÖÃ³¡¾°
+	// è®¾ç½®åœºæ™¯
 	virtual IObject* createObj(const Vec3f* pos) override;
 	virtual void addObj(IObject* obj) override;
 	virtual void addLight(IObject* pos, const Vec3f& color) override;
@@ -37,10 +37,10 @@ public:
 
 	virtual void setSampleCount(int count) override;
 
-	// ÉèÖÃ¹âÏß×·×ÙµÄ×î´óÉî¶È
+	// è®¾ç½®å…‰çº¿è¿½è¸ªçš„æœ€å¤§æ·±åº¦
 	virtual void setMaxDepth(int depth) override;
 	
-	// ¿ªÊ¼äÖÈ¾
+	// å¼€å§‹æ¸²æŸ“
 	virtual void rayGeneration(const ExecutexType type = ExecutexType::Asynchronous) override;
 
 private:

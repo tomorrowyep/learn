@@ -1,11 +1,11 @@
-#ifndef __GEOMETRY_H__
+ï»¿#ifndef __GEOMETRY_H__
 #define __GEOMETRY_H__
 
 #include <iostream>
 #include <cmath>
 #include <cassert>
 
-// ÏòÁ¿Ïà¹Ø
+// å‘é‡ç›¸å…³
 template<size_t DIM, typename T>
 struct vec
 {
@@ -14,7 +14,7 @@ struct vec
 		std::fill_n(m_data, DIM, T());
 	}
 
-	// Ö§³ÖÊ¹ÓÃ³õÊ¼»¯ÁĞ±í
+	// æ”¯æŒä½¿ç”¨åˆå§‹åŒ–åˆ—è¡¨
 	vec(std::initializer_list<T> list)
 	{
 		assert(list.size() == DIM);
@@ -151,8 +151,8 @@ private:
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
-// ÏòÁ¿²Ù×÷
-// ±íÊ¾µã³Ë
+// å‘é‡æ“ä½œ
+// è¡¨ç¤ºç‚¹ä¹˜
 template<size_t DIM, typename T>
 T operator* (const vec<DIM, T>& left, const vec<DIM, T>& right)
 {
@@ -171,7 +171,7 @@ T dot(const vec<DIM, T>& left, const vec<DIM, T>& right)
 	return left * right;
 }
 
-// ¶ÔÓ¦ÔªËØÏà³Ë
+// å¯¹åº”å…ƒç´ ç›¸ä¹˜
 template<size_t DIM, typename T>
 vec<DIM, T> multiply_elements(const vec<DIM, T>& left, const vec<DIM, T>& right)
 {
@@ -250,9 +250,9 @@ template <typename T>
 vec<3, T> cross(const vec<3, T>& v1, const vec<3, T>& v2)
 {
 	return vec<3, T>(
-		v1.y * v2.z - v1.z * v2.y,  // x ·ÖÁ¿
-		v1.z * v2.x - v1.x * v2.z,  // y ·ÖÁ¿
-		v1.x * v2.y - v1.y * v2.x   // z ·ÖÁ¿
+		v1.y * v2.z - v1.z * v2.y,  // x åˆ†é‡
+		v1.z * v2.x - v1.x * v2.z,  // y åˆ†é‡
+		v1.x * v2.y - v1.y * v2.x   // z åˆ†é‡
 	);
 }
 
@@ -273,7 +273,7 @@ std::iostream& operator<< (std::iostream& out, const vec<DIM, T>& left)
 
 template<size_t ROWS, size_t COLS, typename T> class mat;
 
-// ¼ÆËãĞĞÁĞÊ½
+// è®¡ç®—è¡Œåˆ—å¼
 template<size_t DIM, typename T>
 struct dt
 {
@@ -298,7 +298,7 @@ struct dt<1, T>
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
-// ¾ØÕó
+// çŸ©é˜µ
 template<size_t ROWS, size_t COLS, typename T>
 class mat
 {
@@ -315,7 +315,7 @@ public:
 		}
 	}
 
-	// ·µ»ØĞĞÏòÁ¿
+	// è¿”å›è¡Œå‘é‡
 	vec<COLS, T>& operator[] (int index)
 	{
 		assert(index < ROWS);
@@ -328,7 +328,7 @@ public:
 		return m_data[index];
 	}
 
-	// ·µ»ØÁĞÏòÁ¿
+	// è¿”å›åˆ—å‘é‡
 	vec<ROWS, T> col(int index) const
 	{
 		assert(index < COLS);
@@ -341,7 +341,7 @@ public:
 		return ret;
 	}
 
-	// ÉèÖÃÁĞÏòÁ¿
+	// è®¾ç½®åˆ—å‘é‡
 	void setCol(int index, const vec<ROWS, T>& src)
 	{
 		assert(index < COLS);
@@ -351,7 +351,7 @@ public:
 		}
 	}
 
-	// »ñÈ¡Óà×Ó¾ØÕó£¬Èë²ÎÎªÉ¾³ıÄ³ĞĞÄ³ÁĞ
+	// è·å–ä½™å­çŸ©é˜µï¼Œå…¥å‚ä¸ºåˆ é™¤æŸè¡ŒæŸåˆ—
 	mat<ROWS - 1, COLS - 1, T> get_minor(size_t row, size_t col) const
 	{
 		mat<ROWS - 1, COLS - 1, T> ret;
@@ -365,13 +365,13 @@ public:
 		return dt<COLS, T>::det(*this);
 	}
 
-	// »ñÈ¡Óà×ÓÊ½
+	// è·å–ä½™å­å¼
 	T cofactor(size_t row, size_t col) const
 	{
 		return get_minor(row, col).det() * ((row + col) % 2 ? -1 : 1);
 	}
 
-	// °éËæ¾ØÕó
+	// ä¼´éšçŸ©é˜µ
 	mat<ROWS, COLS, T> adjugate() const
 	{
 		mat<ROWS, COLS, T> ret;
@@ -380,7 +380,7 @@ public:
 		return ret;
 	}
 
-	// Äæ¾ØÕóÔÙ×ªÖÃ
+	// é€†çŸ©é˜µå†è½¬ç½®
 	mat<ROWS, COLS, T> invert_transpose()
 	{
 		assert(ROWS == COLS);
@@ -390,19 +390,19 @@ public:
 		return ret / tmp;
 	}
 
-	// Äæ¾ØÕó
+	// é€†çŸ©é˜µ
 	mat<ROWS, COLS, T> invert() const
 	{
 		assert(ROWS == COLS);
 
-		// ³õÊ¼»¯Ò»¸ö¸±±¾¾ØÕó£¨Ô­¾ØÕó£©ºÍµ¥Î»¾ØÕó£¨Äæ¾ØÕó£©
+		// åˆå§‹åŒ–ä¸€ä¸ªå‰¯æœ¬çŸ©é˜µï¼ˆåŸçŸ©é˜µï¼‰å’Œå•ä½çŸ©é˜µï¼ˆé€†çŸ©é˜µï¼‰
 		mat<ROWS, COLS, T> srcMatrix = *this;
 		mat<ROWS, COLS, T> inverse;
 
-		// ¸ßË¹-Ô¼¶ûµ±ÏûÔª·¨
+		// é«˜æ–¯-çº¦å°”å½“æ¶ˆå…ƒæ³•
 		for (size_t i = 0; i < ROWS; ++i)
 		{
-			// Ñ°ÕÒµ±Ç°ÁĞÖĞ¾ø¶ÔÖµ×î´óµÄÖ÷Ôª
+			// å¯»æ‰¾å½“å‰åˆ—ä¸­ç»å¯¹å€¼æœ€å¤§çš„ä¸»å…ƒ
 			size_t pivotRow = i;
 			T pivotValue = srcMatrix[i][i];
 			for (size_t k = i + 1; k < ROWS; ++k)
@@ -414,17 +414,17 @@ public:
 				}
 			}
 
-			// Èç¹ûÖ÷ÔªÎªÁã£¬Ôò¾ØÕó²»¿ÉÄæ
+			// å¦‚æœä¸»å…ƒä¸ºé›¶ï¼Œåˆ™çŸ©é˜µä¸å¯é€†
 			assert(pivotValue != 0);
 
-			// ½»»»µ±Ç°ĞĞºÍÖ÷ÔªĞĞ
+			// äº¤æ¢å½“å‰è¡Œå’Œä¸»å…ƒè¡Œ
 			if (pivotRow != i)
 			{
 				std::swap(srcMatrix[i], srcMatrix[pivotRow]);
 				std::swap(inverse[i], inverse[pivotRow]);
 			}
 
-			// ¹éÒ»»¯µ±Ç°ĞĞ£¨Ê¹Ö÷Ôª±äÎª1£©
+			// å½’ä¸€åŒ–å½“å‰è¡Œï¼ˆä½¿ä¸»å…ƒå˜ä¸º1ï¼‰
 			T pivot = srcMatrix[i][i];
 			for (size_t j = 0; j < ROWS; ++j)
 			{
@@ -432,7 +432,7 @@ public:
 				inverse[i][j] /= pivot;
 			}
 
-			// ÏûÈ¥ÆäËûĞĞµÄµ±Ç°ÁĞ
+			// æ¶ˆå»å…¶ä»–è¡Œçš„å½“å‰åˆ—
 			for (size_t j = 0; j < ROWS; ++j)
 			{
 				if (i != j)
@@ -458,7 +458,7 @@ private:
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
 
- // ¾ØÕó²Ù×÷
+ // çŸ©é˜µæ“ä½œ
 template<size_t ROWS, size_t COLS, typename T>
 vec<ROWS, T> operator* (const mat<ROWS, COLS, T>& matrix, const vec<COLS, T>& vector)
 {

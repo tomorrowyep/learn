@@ -1,4 +1,4 @@
-#ifndef __TGAIMAGE_H__
+ï»¿#ifndef __TGAIMAGE_H__
 #define __TGAIMAGE_H__
 
 #include <array>
@@ -10,18 +10,18 @@
 #pragma pack(push, 1)
 struct TGA_Header
 {
-	char idLen; // ±êÊ¶·û×Ö¶Î³¤¶È£¬Ö¸¶¨ÎÄ¼şÍ·ºóµÄ¸½¼ÓĞÅÏ¢³¤¶È¡£
-	char colorMapType; // ÊÇ·ñ°üº¬µ÷É«°å£¨0£ºÎŞ£»1£ºÓĞ£©¡£
-	char dataTypeCode; // Í¼ÏñÊı¾İµÄÀàĞÍºÍÑ¹Ëõ·½Ê½¡£
-	short colorMapOrg; // µ÷É«°åµÄÆğÊ¼Ë÷Òı¡£
-	short colorMapLen; // µ÷É«°åµÄÌõÄ¿Êı¡£
-	char colorMapDepth; // µ÷É«°åÌõÄ¿µÄÎ»Éî¶È£¨ÀıÈç 24 Î»£©¡£
-	short xOrg; // Í¼Ïñ X ×ø±êµÄÆğÊ¼Æ«ÒÆ¡£
-	short yOrg; // Í¼Ïñ Y ×ø±êµÄÆğÊ¼Æ«ÒÆ¡£
-	short width; // ¿í
-	short height; // ¸ß
-	char bitsperpixel; // Ã¿ÏñËØµÄÎ»Éî¶È£¨8¡¢16¡¢24 »ò 32 Î»£©¡£
-	char imagedescriptor; // Í¼ÏñÃèÊö·û£¨´æ´¢Ë³ĞòºÍ Alpha Í¨µÀÎ»Êı£©
+	char idLen; // æ ‡è¯†ç¬¦å­—æ®µé•¿åº¦ï¼ŒæŒ‡å®šæ–‡ä»¶å¤´åçš„é™„åŠ ä¿¡æ¯é•¿åº¦
+	char colorMapType; // æ˜¯å¦åŒ…å«è°ƒè‰²æ¿ï¼ˆ0ï¼šæ— ï¼›1ï¼šæœ‰ï¼‰
+	char dataTypeCode; // å›¾åƒæ•°æ®çš„ç±»å‹å’Œå‹ç¼©æ–¹å¼
+	short colorMapOrg; // è°ƒè‰²æ¿çš„èµ·å§‹ç´¢å¼•
+	short colorMapLen; // è°ƒè‰²æ¿çš„æ¡ç›®æ•°
+	char colorMapDepth; // è°ƒè‰²æ¿æ¡ç›®çš„ä½æ·±åº¦ï¼ˆä¾‹å¦‚ 24 ä½ï¼‰
+	short xOrg; // å›¾åƒ X åæ ‡çš„èµ·å§‹åç§»
+	short yOrg; // å›¾åƒ Y åæ ‡çš„èµ·å§‹åç§»
+	short width; // å®½
+	short height; // é«˜
+	char bitsperpixel; // æ¯åƒç´ çš„ä½æ·±åº¦ï¼ˆ8ã€16ã€24 æˆ– 32 ä½ï¼‰
+	char imagedescriptor; // å›¾åƒæè¿°ç¬¦ï¼ˆå­˜å‚¨é¡ºåºå’Œ Alpha é€šé“ä½æ•°ï¼‰
 };
 #pragma pack(pop)
 
@@ -29,7 +29,7 @@ struct TGAColor
 {
 	TGAColor() : m_bgra(), m_bytespp(1) { std::fill_n(m_bgra, 4, 0); }
 
-	// ¹éÒ»»¯ÑÕÉ«µÄ¹¹Ôì
+	// å½’ä¸€åŒ–é¢œè‰²çš„æ„é€ 
 	TGAColor(Vec3f color) : m_bgra(), m_bytespp(3)
 	{
 		std::fill_n(m_bgra, 4, 0);
@@ -43,7 +43,10 @@ struct TGAColor
 		m_bgra[2] = (unsigned char)std::round(color.x);
 	}
 
-	TGAColor(unsigned char R, unsigned char G, unsigned char B, unsigned char A) : m_bytespp(4)
+	TGAColor(unsigned char R,
+		unsigned char G,
+		unsigned char B,
+		unsigned char A = 0) : m_bytespp(4)
 	{
 		m_bgra[0] = B;
 		m_bgra[1] = G;
@@ -51,7 +54,7 @@ struct TGAColor
 		m_bgra[3] = A;
 	}
 
-	// »Ò¶È
+	// ç°åº¦
 	TGAColor(unsigned char v) : m_bgra(), m_bytespp(1)
 	{
 		std::fill_n(m_bgra, 4, 0);
@@ -84,7 +87,7 @@ struct TGAColor
 		return res;
 	}
 
-	// Ëõ·Å
+	// ç¼©æ”¾
 	TGAColor operator* (float intensity)
 	{
 		TGAColor res = *this;
@@ -111,7 +114,7 @@ struct TGAColor
 	}
 
 	unsigned char m_bgra[4];
-	unsigned char m_bytespp; // Ã¿¸öÏñËØÕ¼ÓÃµÄ×Ö½ÚÊı
+	unsigned char m_bytespp; // æ¯ä¸ªåƒç´ å ç”¨çš„å­—èŠ‚æ•°
 };
 
 class TGAImage
@@ -119,7 +122,7 @@ class TGAImage
 public:
 	enum Format 
 	{
-		GRAYSCALE = 1, 
+		GRAYSCALE = 1,
 		RGB = 3,
 		RGBA = 4
 	};
@@ -135,17 +138,17 @@ public:
 	void loadTexture(std::filesystem::path filePath);
 	bool write_tga_file(const std::filesystem::path& filePath, bool rle = true);
 
-	TGAColor diffuse(Vec2f uvf); // »ñÈ¡Âş·´ÉäÎÆÀí
-	float specular(Vec2f uvf); // »ñÈ¡¾µÃæ·´ÉäÎÆÀí
-	Vec3f normal(Vec2f uvf); // »ñÈ¡·¨ÏßÎÆÀí
+	TGAColor diffuse(Vec2f uvf); // è·å–æ¼«åå°„çº¹ç†
+	float specular(Vec2f uvf); // è·å–é•œé¢åå°„çº¹ç†
+	Vec3f normal(Vec2f uvf); // è·å–æ³•çº¿çº¹ç†
 
 	bool flip_horizontally();
 	bool flip_vertically();
 	bool scale(int w, int h);
 
-	// Ô­µãÔÚ×óÉÏ½Ç£¬x±íÊ¾ÁĞ£¬y±íÊ¾ĞĞ
+	// åŸç‚¹åœ¨å·¦ä¸Šè§’ï¼Œxè¡¨ç¤ºåˆ—ï¼Œyè¡¨ç¤ºè¡Œ
 	TGAColor get(int col, int row);
-	// Ô­µãÔÚ×óÉÏ½Ç£¬x±íÊ¾ÁĞ£¬y±íÊ¾ĞĞ
+	// åŸç‚¹åœ¨å·¦ä¸Šè§’ï¼Œxè¡¨ç¤ºåˆ—ï¼Œyè¡¨ç¤ºè¡Œ
 	bool set(int col, int row, const TGAColor& c);
 
 	int get_width();

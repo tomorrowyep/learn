@@ -1,4 +1,4 @@
-#include "triangleobj.h"
+ï»¿#include "triangleobj.h"
 #include "triangleobj.h"
 
 constexpr float epsilon = 1e-9f;
@@ -161,32 +161,32 @@ HitResult TriangleObj::intersect(const Ray& ray)
 	Vec3f rayDirection = ray.direction;
 	Vec3f normal = cross(m_pVertexs[1] - m_pVertexs[0], m_pVertexs[2] - m_pVertexs[0]).normalize();
 
-	// µ÷Õû·¨ÏòÁ¿
+	// è°ƒæ•´æ³•å‘é‡
 	if (dot(normal, rayDirection) > 0.0f)
 		normal = normal * -1;
 
-	// Èç¹ûÊÓÏßºÍÈı½ÇĞÎÆ½ĞĞ£¬¼´Óë·¨Ïß´¹Ö±Ôò²»¼ÆËã
+	// å¦‚æœè§†çº¿å’Œä¸‰è§’å½¢å¹³è¡Œï¼Œå³ä¸æ³•çº¿å‚ç›´åˆ™ä¸è®¡ç®—
 	if (fabs(dot(normal, rayDirection)) < epsilon)
 		return res;
 
-	// »ñÈ¡¾àÀë²¢ÅĞ¶Ï·½Ïò£¬Èç¹ûÔÚ±³ÃæÔò²»¼ÆËã
+	// è·å–è·ç¦»å¹¶åˆ¤æ–­æ–¹å‘ï¼Œå¦‚æœåœ¨èƒŒé¢åˆ™ä¸è®¡ç®—
 	float t = (dot(normal, m_pVertexs[0]) - dot(rayStart, normal)) / dot(rayDirection, normal);
 	if (t < epsilon)
 		return res;
 
-	Vec3f hitPoint = rayStart + rayDirection * t; // Çó½»µã
+	Vec3f hitPoint = rayStart + rayDirection * t; // æ±‚äº¤ç‚¹
 
-	// ÅĞ¶ÏÊÇ·ñÔÚÈı½ÇĞÎÄÚ
+	// åˆ¤æ–­æ˜¯å¦åœ¨ä¸‰è§’å½¢å†…
 	Vec3f barycentric = _getBarycentric(hitPoint);
 	if (barycentric.x < 0 || barycentric.y < 0 || barycentric.z < 0)
 		return res;
 
-	// ²åÖµµÃµ½·¨Ïß
+	// æ’å€¼å¾—åˆ°æ³•çº¿
 	/*normal = (m_pNormals[0] * barycentric.x + m_pNormals[1] * barycentric.y + m_pNormals[2] * barycentric.z).normalize();
 	if (dot(normal, rayDirection) > 0.0f)
 		normal = normal * -1;*/
 
-	// ²åÖµ»ñÈ¡ÎÆÀí×ø±ê
+	// æ’å€¼è·å–çº¹ç†åæ ‡
 	Vec2f texCoords = (m_pTexCoords[0] * barycentric.x + m_pTexCoords[1] * barycentric.y + m_pTexCoords[2] * barycentric.z);
 
 	res.isHit = true;
@@ -197,6 +197,8 @@ HitResult TriangleObj::intersect(const Ray& ray)
 	res.material.isEmissive = m_material.isEmissive;
 	res.material.color = m_material.color;
 
+	assert(res.material.isEmissive == false);
+
 	return res;
 }
 
@@ -206,11 +208,11 @@ Vec3f TriangleObj::_getBarycentric(const Vec3f& point)
 	Vec3f AB = m_pVertexs[1] - m_pVertexs[0];
 	Vec3f AC = m_pVertexs[2] - m_pVertexs[0];
 
-	// Í¨¹ı²æ³Ë»ñÈ¡ÖØĞÄ×ø±ê, ¶ÔÓ¦[area, u, v]£¬±íÊ¾Ãæ»ı
+	// é€šè¿‡å‰ä¹˜è·å–é‡å¿ƒåæ ‡, å¯¹åº”[area, u, v]ï¼Œè¡¨ç¤ºé¢ç§¯
 	Vec3f barycentric = cross(Vec3f(PA.x, AB.x, AC.x), Vec3f(PA.y, AB.y, AC.y));
 	if ((barycentric.x - 0.f) < epsilon)
-		return Vec3f(-1, 1, 1); // µÈÓÚ0±íÊ¾ÍË»¯ÎªÖ±Ïß£¬ÎªÎŞĞ§µÄÈı½ÇĞÎ
+		return Vec3f(-1, 1, 1); // ç­‰äº0è¡¨ç¤ºé€€åŒ–ä¸ºç›´çº¿ï¼Œä¸ºæ— æ•ˆçš„ä¸‰è§’å½¢
 
-	// ×ªÎª1-u-v, u, vµÄ±ê×¼¸ñÊ½£¬¼´±ÈÀıÄ£Ê½
+	// è½¬ä¸º1-u-v, u, vçš„æ ‡å‡†æ ¼å¼ï¼Œå³æ¯”ä¾‹æ¨¡å¼
 	return Vec3f(1.f - (barycentric.y + barycentric.z) / barycentric.x, barycentric.y / barycentric.x, barycentric.z / barycentric.x);
 }

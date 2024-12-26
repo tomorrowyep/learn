@@ -1,4 +1,4 @@
-#ifndef __RASTERENGINE_H__
+ï»¿#ifndef __RASTERENGINE_H__
 #define __RASTERENGINE_H__
 
 #include "irenderengine.h"
@@ -11,32 +11,32 @@ public:
     explicit RasterEngine() = default;
     ~RasterEngine() = default;
 
-    // ÊÓÍ¼×ª»»Ïà¹Ø
+    // è§†å›¾è½¬æ¢ç›¸å…³
     virtual Matrix lookat(Vec3f cameraPos, Vec3f target, Vec3f up) override;
     virtual Matrix ortho(float left, float right, float bottom, float top, float near, float far) override;
     virtual Matrix ortho(Vec2f width, Vec2f height, float near, float far) override;
     virtual Matrix perspective(float fov, float aspect, float near, float far) override;
     virtual Matrix viewport(int width, int height) override;
 
-    // ¼ÆËãÇĞÏßÓë¸±ÇĞÏß
+    // è®¡ç®—åˆ‡çº¿ä¸å‰¯åˆ‡çº¿
     virtual std::tuple<Vec3f, Vec3f> computeTangentSpace(const Vec3f* pos, const Vec2f* uv) override;
 
     virtual void setDevice(TGAImage* device) override;
 
-    // ÉèÖÃ×ÅÉ«Æ÷
+    // è®¾ç½®ç€è‰²å™¨
     virtual void setShader(IShader* pIShader) override;
 
-    // Bresenham Ïß¶ÎËã·¨
+    // Bresenham çº¿æ®µç®—æ³•
     virtual void drawLine(Vec2i start, Vec2i end, TGAColor color) override;
     virtual void drawLine(int x0, int y0, int x1, int y1, TGAColor color) override;
 
-    // É¨ÏßËã·¨Ìî³äÈı½ÇĞÎ
+    // æ‰«çº¿ç®—æ³•å¡«å……ä¸‰è§’å½¢
     virtual void drawTriangle(Vec3f v0, Vec3f v1, Vec3f v2, TGAColor color) override;
-    // ÖØĞÄËã·¨Ìî³äÈı½ÇĞÎ
+    // é‡å¿ƒç®—æ³•å¡«å……ä¸‰è§’å½¢
     virtual void drawTriangle(const IShader::VertexInput& input) override;
 
 private:
-    Vec3f _getBarycentric(const Vec3f* pVert, const Vec3f point); // ÅĞ¶ÏÊÇ·ñÔÚÈı½ÇĞÎÖĞ
+    Vec3f _getBarycentric(const Vec3f* pVert, const Vec3f point); // åˆ¤æ–­æ˜¯å¦åœ¨ä¸‰è§’å½¢ä¸­
     void _transViewportCoords(Vec4f& vec);
     void _transAccuracy(Vec4f& vec);
 
@@ -48,6 +48,6 @@ private:
     int m_height = 0;
     TGAImage* m_pDevice = nullptr;
     IShader* m_pIShader = nullptr;
-    std::unique_ptr<float[]> m_zBuffer; // ´æ´¢Éî¶ÈÖµ
+    std::unique_ptr<float[]> m_zBuffer; // å­˜å‚¨æ·±åº¦å€¼
 };
 #endif // !__RASTERENGINE_H__

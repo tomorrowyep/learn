@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "objfilemodel.h"
 
 ObjFileModel::ObjFileModel(std::filesystem::path& filePath)
@@ -12,7 +12,7 @@ ObjFileModel::ObjFileModel(std::filesystem::path& filePath)
 	{
 		std::istringstream iss(line);
 		std::string prefix;
-		iss >> prefix;  // »ñÈ¡Êı¾İÀàĞÍ
+		iss >> prefix;  // è·å–æ•°æ®ç±»å‹
 
 		if (prefix == "v")
 		{
@@ -24,7 +24,7 @@ ObjFileModel::ObjFileModel(std::filesystem::path& filePath)
 		{
 			Vec2f vert;
 			iss >> vert.x >> vert.y;
-			m_uvs.push_back(std::move(vert));// Ö»¿¼ÂÇÁË¶şÎ¬ÎÆÀíÓ³ÉäµÄ³¡¾°
+			m_uvs.push_back(std::move(vert));// åªè€ƒè™‘äº†äºŒç»´çº¹ç†æ˜ å°„çš„åœºæ™¯
 		}
 		else if (prefix == "vn")
 		{
@@ -39,11 +39,11 @@ ObjFileModel::ObjFileModel(std::filesystem::path& filePath)
 			std::vector<Vec3i> face;
 			while (iss >> vert.x >> trash >> vert.y >> trash >> vert.z) 
 			{
-				for (int i = 0; i < 3; i++) vert[i]--; // Ë÷ÒıĞèÒª¼õ1,OBJÎÄ¼şË÷Òı´Ó1¿ªÊ¼£¬²»ÓëvectorÈİÆ÷Ö±½ÓÆ¥Åä
+				for (int i = 0; i < 3; i++) vert[i]--; // ç´¢å¼•éœ€è¦å‡1,OBJæ–‡ä»¶ç´¢å¼•ä»1å¼€å§‹ï¼Œä¸ä¸vectorå®¹å™¨ç›´æ¥åŒ¹é…
 				face.push_back(vert);
 			}
 
-			m_faces.push_back(std::move(face));// Ö»¿¼ÂÇÁËÕâ¸öÇé¿öv1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+			m_faces.push_back(std::move(face));// åªè€ƒè™‘äº†è¿™ä¸ªæƒ…å†µv1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
 		}
 	}
 

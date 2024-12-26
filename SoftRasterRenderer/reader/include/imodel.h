@@ -1,4 +1,4 @@
-#ifndef __IMODEL_H__
+ï»¿#ifndef __IMODEL_H__
 #define __IMODEL_H__
 
 #include <vector>
@@ -23,40 +23,40 @@ enum class ReadType : int8_t
 
 interface IModel
 {
-    // »ñÈ¡¶¥µãÊıÁ¿
+    // è·å–é¡¶ç‚¹æ•°é‡
 	virtual int nverts() PURE;
 
-    // »ñÈ¡ÃæµÄÊıÁ¿
+    // è·å–é¢çš„æ•°é‡
 	virtual  int nfaces() PURE;
 
     /*
-    * iface£ºµÚ¼¸¸öÃæ
-    * nthvert£ºµÚ¼¸¸ö¶¥µã£¨0->¶¥µã¡¢1->ÎÆÀí¡¢2->·¨Ïß
-    * ret£º·µ»Ø¶ÔÓ¦µÄ·¨ÏßÊı¾İ*/
+    * ifaceï¼šç¬¬å‡ ä¸ªé¢
+    * nthvertï¼šç¬¬å‡ ä¸ªé¡¶ç‚¹ï¼ˆ0->é¡¶ç‚¹ã€1->çº¹ç†ã€2->æ³•çº¿
+    * retï¼šè¿”å›å¯¹åº”çš„æ³•çº¿æ•°æ®*/
     virtual Vec3f normal(int iface, int nthvert) PURE;
 
-    // ¸ù¾İË÷Òı·µ»Ø¶ÔÓ¦¶¥µãÊı¾İ
+    // æ ¹æ®ç´¢å¼•è¿”å›å¯¹åº”é¡¶ç‚¹æ•°æ®
     virtual Vec3f vert(int i) PURE;
 
    /*
-   * iface£ºµÚ¼¸¸öÃæ
-   * nthvert£ºµÚ¼¸¸ö¶¥µã£¨0->¶¥µã¡¢1->ÎÆÀí¡¢2->·¨Ïß
-   * ret£º·µ»Ø¶ÔÓ¦µÄ¶¥µãÊı¾İ*/
+   * ifaceï¼šç¬¬å‡ ä¸ªé¢
+   * nthvertï¼šç¬¬å‡ ä¸ªé¡¶ç‚¹ï¼ˆ0->é¡¶ç‚¹ã€1->çº¹ç†ã€2->æ³•çº¿
+   * retï¼šè¿”å›å¯¹åº”çš„é¡¶ç‚¹æ•°æ®*/
     virtual Vec3f vert(int iface, int nthvert) PURE;
 
     /*
-    * iface£ºµÚ¼¸¸öÃæ
-    * nthvert£ºµÚ¼¸¸ö¶¥µã£¨0->¶¥µã¡¢1->ÎÆÀí¡¢2->·¨Ïß
-    * ret£º·µ»Ø¶ÔÓ¦µÄÎÆÀí×ø±ê*/
+    * ifaceï¼šç¬¬å‡ ä¸ªé¢
+    * nthvertï¼šç¬¬å‡ ä¸ªé¡¶ç‚¹ï¼ˆ0->é¡¶ç‚¹ã€1->çº¹ç†ã€2->æ³•çº¿
+    * retï¼šè¿”å›å¯¹åº”çš„çº¹ç†åæ ‡*/
     virtual Vec2f uv(int iface, int nthvert) PURE;
 
-    // »ñÈ¡¶ÔÓ¦ÃæµÄ¶¥µãË÷Òı
+    // è·å–å¯¹åº”é¢çš„é¡¶ç‚¹ç´¢å¼•
     virtual std::vector<int> faceVertIndex(int idx) PURE;
 };
 
 extern "C"
 {
-    // Ö§³ÖÖĞÎÄÂ·¾¶
+    // æ”¯æŒä¸­æ–‡è·¯å¾„
     READER_Module IModel* createInstance(const char* filePath, ReadType mode = ReadType::Synchronous);
     READER_Module void release(IModel* pIMode);
 }
