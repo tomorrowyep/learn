@@ -5,6 +5,9 @@
 #include "context/klogiccontext.h"
 #include "core/renderPass/krenderpass.h"
 #include "core/objects/kframebuffer.h"
+#include "core/pipeline/kpipeline.h"
+#include "core/pipeline/kpipelinelayout.h"
+#include "core/pipeline/kshadermodule.h"
 
 class KForwardRenderer : public IKRenderer
 {
@@ -20,12 +23,18 @@ public:
 		uint32_t imageIndex) override;
 
 private:
-	void _createRenderPass(KLogicContext& core);
-	void _createFramebuffers(KLogicContext& core);
+	bool _createRenderPass(KLogicContext& core);
+	bool _createPipeline(KLogicContext& core);
+	void _destroyPipeline();
+	bool _createFramebuffers(KLogicContext& core);
 	void _destroyFramebuffers();
 
 private:
 	KRenderPass  m_renderPass;
+	KShaderModule m_vertShader;
+	KShaderModule m_fragShader;
+	KPipelineLayout m_pipelineLayout;
+	KPipeline m_pipeline;
 	std::vector<KFramebuffer> m_framebuffers;
 };
 
