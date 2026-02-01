@@ -11,6 +11,8 @@ public:
 
 	KSampler(const KSampler&) = delete;
 	KSampler& operator=(const KSampler&) = delete;
+	KSampler(KSampler&&) noexcept;
+	KSampler& operator=(KSampler&&) noexcept;
 
 	bool Init(
 		VkDevice device,

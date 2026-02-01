@@ -10,6 +10,7 @@ KDevice::~KDevice()
 
 bool KDevice::Create(const KPhysicalDevice& physicalDevice, const KDeviceCreateDesc& desc)
 {
+	m_physicalDevice = physicalDevice.GetHandle();
 	m_queueFamiliesIdxs = physicalDevice.GetQueueFamilies();
 	m_msaaSamples = physicalDevice.GetMaxUsableSampleCount();
 

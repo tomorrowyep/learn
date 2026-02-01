@@ -1,9 +1,30 @@
 ﻿#include "ksampler.h"
 #include <cassert>
+#include <utility>
 
 KSampler::~KSampler()
 {
 	Destroy();
+}
+
+KSampler::KSampler(KSampler&& other) noexcept
+{
+	*this = std::move(other);
+}
+
+KSampler& KSampler::operator=(KSampler&& other) noexcept
+{
+	if (this != &other)
+	{
+		Destroy();
+
+		m_device = other.m_device;
+		m_sampler = other.m_sampler;
+
+		other.m_device = VK_NULL_HANDLE;
+		other.m_sampler = VK_NULL_HANDLE;
+	}
+	return *this;
 }
 
 bool KSampler::Init(

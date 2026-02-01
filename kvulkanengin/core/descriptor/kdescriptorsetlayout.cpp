@@ -1,4 +1,4 @@
-﻿#include "kdescriptorsetLayout.h"
+﻿#include "kdescriptorsetlayout.h"
 #include <cassert>
 
 KDescriptorSetLayout::~KDescriptorSetLayout()

@@ -32,6 +32,7 @@ public:
 
 	VkQueue GetGraphicsQueue() const { return m_graphicsQueue; }
 	VkQueue GetPresentQueue()  const { return m_presentQueue; }
+	VkPhysicalDevice GetPhysicalDevice() const { return m_physicalDevice; }
 
 private:
 	struct QueueFamilyBuildInfo
@@ -46,6 +47,7 @@ private:
 
 private:
 	VkDevice m_logicDevice{ VK_NULL_HANDLE };
+	VkPhysicalDevice m_physicalDevice{ VK_NULL_HANDLE };
 
 	QueueFamilyIndexs m_queueFamiliesIdxs{};
 	VkQueue  m_graphicsQueue{ VK_NULL_HANDLE };

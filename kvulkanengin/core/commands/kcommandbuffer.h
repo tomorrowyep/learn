@@ -30,6 +30,7 @@ public:
 
 	VkCommandBuffer GetHandle(size_t index = 0) const { return m_buffers[index]; }
 	std::vector<VkCommandBuffer>& GetHandles() { return m_buffers; }
+	VkCommandPool GetPool() const { return m_pool; }
 
 	struct KSingalRecordhelper
 	{

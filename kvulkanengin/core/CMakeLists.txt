@@ -29,8 +29,8 @@ set(SOURCE_FILES
 	./objects/kframebuffer.cpp
 
 	#krenderpass
-	./renderPass/krenderpass.h
-	./renderPass/krenderpass.cpp
+	./renderpass/krenderpass.h
+	./renderpass/krenderpass.cpp
 
 	#kpipeline
 	./pipeline/kshadermodule.h
@@ -61,11 +61,11 @@ set(SOURCE_FILES
 	./sync/ksemaphore.cpp
 )
 
-add_library(kvulkancore STATIC ${SOURCE_FILES})
+add_library(kvulkancorelayer STATIC ${SOURCE_FILES})
 
 # 设置包含路径：PUBLIC 确保依赖此库的目标也能访问这些路径
 # 注意：代码中使用 "core/context/..." 这样的路径，所以需要将项目根目录添加到包含路径
-target_include_directories(kvulkancore 
+target_include_directories(kvulkancorelayer 
 	PUBLIC 
 		${CMAKE_SOURCE_DIR}                    # 项目根目录（用于 "core/context/..." 等）
 		${CMAKE_CURRENT_SOURCE_DIR}            # core 目录（用于 "context/", "objects/" 等）

@@ -1,4 +1,4 @@
-﻿#include "KSemaphore.h"
+﻿#include "ksemaphore.h"
 #include <utility>
 #include <cassert>
 

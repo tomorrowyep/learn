@@ -1,4 +1,4 @@
-﻿#include "kpipeline.h"
+#include "kpipeline.h"
 #include <cassert>
 #include <vector>
 
@@ -94,9 +94,18 @@ bool KPipeline::Init(VkDevice device, const KPipelineCreateDesc& desc)
 	colorBlending.attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size());
 	colorBlending.pAttachments = colorBlendAttachments.data();
 
-	// 9. Dynamic State（可选，用于动态修改视口等）
+	// 9. Dynamic State
+	std::vector<VkDynamicState> dynamicStates;
+	if (desc.viewport.dynamic)
+	{
+		dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+		dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+	}
+
 	VkPipelineDynamicStateCreateInfo dynamicState{};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
 
 	// 10. Pipeline Create Info
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -110,7 +119,7 @@ bool KPipeline::Init(VkDevice device, const KPipelineCreateDesc& desc)
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = dynamicStates.empty() ? nullptr : &dynamicState;
 	pipelineInfo.layout = desc.pipelineLayout;
 	pipelineInfo.renderPass = desc.renderPass;
 	pipelineInfo.subpass = desc.subpass;

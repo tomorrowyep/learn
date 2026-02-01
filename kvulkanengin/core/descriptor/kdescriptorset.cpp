@@ -1,4 +1,4 @@
-﻿#include "kdescriptorSet.h"
+﻿#include "kdescriptorset.h"
 #include <cassert>
 
 KDescriptorSet::~KDescriptorSet()
