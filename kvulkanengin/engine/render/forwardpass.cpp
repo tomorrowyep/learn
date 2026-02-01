@@ -1,7 +1,8 @@
-﻿#include "forwardpass.h"
+#include "forwardpass.h"
 #include "../resource/resourcemanager.h"
 #include "../resource/mesh.h"
 #include "../resource/material.h"
+#include "../job/kjobsystem.h"
 #include "core/configs/renderpassdesc.h"
 #include "core/configs/pipelinecreatedesc.h"
 #include <array>
@@ -391,6 +392,136 @@ bool ForwardPass::createCameraDescriptorSet(VkDevice device)
 
 	m_cameraDescriptorSet.Update({write});
 	return true;
+}
+
+void ForwardPass::setupCommandState(VkCommandBuffer cmd)
+{
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.GetHandle());
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = static_cast<float>(m_extent.width);
+	viewport.height = static_cast<float>(m_extent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = {0, 0};
+	scissor.extent = m_extent;
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+	VkDescriptorSet cameraSet = m_cameraDescriptorSet.GetHandle();
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 0, 1, &cameraSet, 0, nullptr);
+}
+
+void ForwardPass::recordRenderItem(VkCommandBuffer cmd, const RenderItem& item, ResourceManager& resources)
+{
+	Mesh* mesh = resources.getMesh(item.meshID);
+	Material* material = resources.getMaterial(item.materialID);
+
+	if (!mesh || !mesh->isUploaded())
+		return;
+
+	if (!material || !material->isUploaded())
+	{
+		material = resources.getMaterial(resources.getDefaultMaterial());
+		if (!material)
+			return;
+	}
+
+	VkDescriptorSet materialSet = material->descriptorSet.GetHandle();
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 1, 1, &materialSet, 0, nullptr);
+
+	vkCmdPushConstants(cmd, m_pipelineLayout.GetHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &item.transform);
+
+	VkBuffer vb = mesh->vertexBuffer.GetHandle();
+	VkDeviceSize offset = 0;
+	vkCmdBindVertexBuffers(cmd, 0, 1, &vb, &offset);
+	vkCmdBindIndexBuffer(cmd, mesh->indexBuffer.GetHandle(), 0, VK_INDEX_TYPE_UINT32);
+
+	vkCmdDrawIndexed(cmd, mesh->getIndexCount(), 1, 0, 0, 0);
+}
+
+void ForwardPass::renderParallel(VkCommandBuffer primaryCmd, uint32_t imageIndex, uint32_t frameIndex,
+                                 const RenderScene& renderScene, ResourceManager& resources, KJobSystem& jobSystem)
+{
+	if (!m_initialized || !renderScene.hasCamera)
+		return;
+
+	void* data = m_cameraUBO.Map();
+	memcpy(data, &renderScene.cameraData, sizeof(CameraUBO));
+	m_cameraUBO.Unmap();
+
+	VkRenderPassBeginInfo rpBegin{};
+	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	rpBegin.renderPass = m_renderPass.GetHandle();
+	rpBegin.framebuffer = m_framebuffers[imageIndex].GetHandle();
+	rpBegin.renderArea.extent = m_extent;
+
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = {{0.02f, 0.02f, 0.05f, 1.0f}};
+	clearValues[1].depthStencil = {1.0f, 0};
+	rpBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	rpBegin.pClearValues = clearValues.data();
+
+	vkCmdBeginRenderPass(primaryCmd, &rpBegin, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+	uint32_t threadCount = jobSystem.GetThreadCount();
+	uint32_t itemCount = static_cast<uint32_t>(renderScene.opaqueItems.size());
+
+	if (itemCount == 0 || threadCount == 0)
+	{
+		vkCmdEndRenderPass(primaryCmd);
+		return;
+	}
+
+	std::vector<VkCommandBuffer> secondaryBuffers(threadCount);
+	uint32_t itemsPerThread = (itemCount + threadCount - 1) / threadCount;
+
+	jobSystem.ParallelFor(threadCount, [&](uint32_t threadIndex)
+	{
+		uint32_t start = threadIndex * itemsPerThread;
+		uint32_t end = std::min(start + itemsPerThread, itemCount);
+
+		if (start >= itemCount)
+		{
+			secondaryBuffers[threadIndex] = VK_NULL_HANDLE;
+			return;
+		}
+
+		KCommandBuffer& cmdBuf = jobSystem.GetSecondaryBuffer(threadIndex, frameIndex);
+		cmdBuf.Reset();
+		cmdBuf.BeginSecondary(m_renderPass.GetHandle(), 0, m_framebuffers[imageIndex].GetHandle());
+
+		VkCommandBuffer cmd = cmdBuf.GetHandle();
+		setupCommandState(cmd);
+
+		for (uint32_t i = start; i < end; ++i)
+		{
+			recordRenderItem(cmd, renderScene.opaqueItems[i], resources);
+		}
+
+		cmdBuf.End();
+		secondaryBuffers[threadIndex] = cmd;
+	});
+
+	std::vector<VkCommandBuffer> validBuffers;
+	for (auto buf : secondaryBuffers)
+	{
+		if (buf != VK_NULL_HANDLE)
+		{
+			validBuffers.push_back(buf);
+		}
+	}
+
+	if (!validBuffers.empty())
+	{
+		vkCmdExecuteCommands(primaryCmd, static_cast<uint32_t>(validBuffers.size()), validBuffers.data());
+	}
+
+	vkCmdEndRenderPass(primaryCmd);
 }
 
 } // namespace kEngine

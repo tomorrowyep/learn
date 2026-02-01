@@ -12,6 +12,9 @@ set(ENGINE_SOURCES
     # Render
     render/forwardpass.cpp
     
+    # Job
+    job/kjobsystem.cpp
+    
     # Engine
     engine.cpp
 )
@@ -35,6 +38,10 @@ set(ENGINE_HEADERS
     render/renderdata.h
     render/scenerenderer.h
     render/forwardpass.h
+    
+    # Job
+    job/kthreadpool.h
+    job/kjobsystem.h
 )
 
 add_library(kvulkanenginelayer STATIC ${ENGINE_SOURCES} ${ENGINE_HEADERS})

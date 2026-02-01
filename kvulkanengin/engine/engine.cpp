@@ -1,4 +1,4 @@
-﻿#include "engine.h"
+#include "engine.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <chrono>
@@ -25,6 +25,7 @@ bool Engine::init(const EngineConfig& config)
 		return false;
 
 	m_resources.init(&m_coreContext);
+	m_jobSystem.Init(&m_coreContext);
 
 	if (!m_forwardPass.init(m_coreContext, m_swapchain, m_resources))
 	{
@@ -44,6 +45,7 @@ void Engine::shutdown()
 
 	m_coreContext.GetDevice().WaitIdle();
 	m_forwardPass.destroy();
+	m_jobSystem.Destroy();
 	m_resources.destroy();
 	destroyFrameData();
 	m_swapchain.Destroy();
@@ -234,7 +236,16 @@ bool Engine::beginFrame(uint32_t& imageIndex)
 void Engine::render(uint32_t imageIndex)
 {
 	auto& frame = m_frames[m_currentFrame];
-	m_forwardPass.render(frame.commandBuffer.GetHandle(), imageIndex, m_renderScene, m_resources);
+
+	if (m_parallelRendering && m_jobSystem.IsInitialized() && m_renderScene.opaqueItems.size() > 50)
+	{
+		m_forwardPass.renderParallel(frame.commandBuffer.GetHandle(), imageIndex, m_currentFrame,
+		                             m_renderScene, m_resources, m_jobSystem);
+	}
+	else
+	{
+		m_forwardPass.render(frame.commandBuffer.GetHandle(), imageIndex, m_renderScene, m_resources);
+	}
 }
 
 void Engine::endFrame(uint32_t imageIndex)

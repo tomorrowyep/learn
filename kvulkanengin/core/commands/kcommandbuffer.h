@@ -1,4 +1,4 @@
-﻿#ifndef __KCOMMANDBUFFER_H__
+#ifndef __KCOMMANDBUFFER_H__
 #define __KCOMMANDBUFFER_H__
 
 #include <vulkan.h>
@@ -23,6 +23,7 @@ public:
 
 	void Reset();
 	void Begin();
+	void BeginSecondary(VkRenderPass renderPass, uint32_t subpass, VkFramebuffer framebuffer);
 	void End();
 
 	VkCommandBuffer BeginSingleCommand();

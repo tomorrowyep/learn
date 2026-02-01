@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "../common.h"
 #include "renderdata.h"
@@ -21,6 +21,7 @@ namespace kEngine
 {
 
 class ResourceManager;
+class KJobSystem;
 
 class ForwardPass
 {
@@ -33,6 +34,11 @@ public:
 	void onResize(KCoreContext& ctx, KSwapchain& swapchain);
 
 	void render(VkCommandBuffer cmd, uint32_t imageIndex, const RenderScene& renderScene, ResourceManager& resources);
+	void renderParallel(VkCommandBuffer primaryCmd, uint32_t imageIndex, uint32_t frameIndex,
+	                    const RenderScene& renderScene, ResourceManager& resources, KJobSystem& jobSystem);
+
+	VkRenderPass GetRenderPass() const { return m_renderPass.GetHandle(); }
+	VkFramebuffer GetFramebuffer(uint32_t imageIndex) const { return m_framebuffers[imageIndex].GetHandle(); }
 
 private:
 	bool createRenderPass(VkDevice device, VkFormat colorFormat, VkFormat depthFormat);
@@ -45,6 +51,9 @@ private:
 	bool createCameraDescriptorSet(VkDevice device);
 	void destroyFramebuffers();
 	void destroyDepthResources();
+
+	void setupCommandState(VkCommandBuffer cmd);
+	void recordRenderItem(VkCommandBuffer cmd, const RenderItem& item, ResourceManager& resources);
 
 private:
 	KRenderPass              m_renderPass;

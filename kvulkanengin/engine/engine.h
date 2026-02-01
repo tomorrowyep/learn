@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "common.h"
 #include "scene/scene.h"
@@ -6,6 +6,7 @@
 #include "render/renderdata.h"
 #include "render/scenerenderer.h"
 #include "resource/resourcemanager.h"
+#include "job/kjobsystem.h"
 
 #include "core/context/kcorecontext.h"
 #include "core/context/kswapchain.h"
@@ -50,6 +51,10 @@ public:
 	float deltaTime() const { return m_deltaTime; }
 	float totalTime() const { return m_totalTime; }
 
+	void setParallelRendering(bool enable) { m_parallelRendering = enable; }
+	bool isParallelRendering() const { return m_parallelRendering; }
+	KJobSystem& jobSystem() { return m_jobSystem; }
+
 private:
 	bool initWindow();
 	bool initVulkan();
@@ -77,10 +82,12 @@ private:
 	ResourceManager          m_resources;
 	ForwardPass              m_forwardPass;
 	RenderScene              m_renderScene;
+	KJobSystem               m_jobSystem;
 
 	float                    m_deltaTime = 0.0f;
 	float                    m_totalTime = 0.0f;
 	bool                     m_initialized = false;
+	bool                     m_parallelRendering = true;
 };
 
 } // namespace kEngine
