@@ -2,11 +2,12 @@
 
 #include "common.h"
 #include "scene/scene.h"
-#include "render/forwardpass.h"
 #include "render/renderdata.h"
 #include "render/scenerenderer.h"
 #include "resource/resourcemanager.h"
 #include "job/kjobsystem.h"
+#include "graph/krendergraph.h"
+#include "graph/kforwardpass.h"
 
 #include "core/context/kcorecontext.h"
 #include "core/context/kswapchain.h"
@@ -47,13 +48,14 @@ public:
 
 	uint32_t windowWidth() const { return m_config.width; }
 	uint32_t windowHeight() const { return m_config.height; }
-	float aspectRatio() const { return static_cast<float>(m_config.width) / static_cast<float>(m_config.height); }
+	float aspectRatio() const { return m_config.height > 0 ? static_cast<float>(m_config.width) / static_cast<float>(m_config.height) : 1.0f; }
 	float deltaTime() const { return m_deltaTime; }
 	float totalTime() const { return m_totalTime; }
 
 	void setParallelRendering(bool enable) { m_parallelRendering = enable; }
 	bool isParallelRendering() const { return m_parallelRendering; }
 	KJobSystem& jobSystem() { return m_jobSystem; }
+	KRenderGraph& renderGraph() { return m_renderGraph; }
 
 private:
 	bool initWindow();
@@ -80,9 +82,10 @@ private:
 
 	Scene                    m_scene;
 	ResourceManager          m_resources;
-	ForwardPass              m_forwardPass;
+	KForwardPass             m_forwardPass;
 	RenderScene              m_renderScene;
 	KJobSystem               m_jobSystem;
+	KRenderGraph             m_renderGraph;
 
 	float                    m_deltaTime = 0.0f;
 	float                    m_totalTime = 0.0f;

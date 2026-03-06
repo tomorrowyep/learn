@@ -26,10 +26,11 @@ bool Engine::init(const EngineConfig& config)
 
 	m_resources.init(&m_coreContext);
 	m_jobSystem.Init(&m_coreContext);
+	m_renderGraph.Init(&m_coreContext);
 
-	if (!m_forwardPass.init(m_coreContext, m_swapchain, m_resources))
+	if (!m_forwardPass.Init(m_coreContext, m_swapchain, m_resources))
 	{
-		std::cerr << "[Engine] ForwardPass init failed" << std::endl;
+		std::cerr << "[Engine] KForwardPass init failed" << std::endl;
 		return false;
 	}
 
@@ -44,7 +45,8 @@ void Engine::shutdown()
 		return;
 
 	m_coreContext.GetDevice().WaitIdle();
-	m_forwardPass.destroy();
+	m_forwardPass.Destroy();
+	m_renderGraph.Destroy();
 	m_jobSystem.Destroy();
 	m_resources.destroy();
 	destroyFrameData();
@@ -77,6 +79,10 @@ void Engine::run(std::function<void(float)> updateCallback)
 
 		if (updateCallback)
 			updateCallback(m_deltaTime);
+
+		// Skip rendering when window is minimized
+		if (m_config.width == 0 || m_config.height == 0)
+			continue;
 
 		SceneRenderer::extract(m_scene, m_renderScene, aspectRatio());
 
@@ -236,16 +242,38 @@ bool Engine::beginFrame(uint32_t& imageIndex)
 void Engine::render(uint32_t imageIndex)
 {
 	auto& frame = m_frames[m_currentFrame];
+	VkCommandBuffer cmd = frame.commandBuffer.GetHandle();
 
-	if (m_parallelRendering && m_jobSystem.IsInitialized() && m_renderScene.opaqueItems.size() > 50)
+	// Reset and setup RenderGraph
+	m_renderGraph.Reset();
+
+	// Setup forward pass
+	m_forwardPass.SetupPass(m_renderGraph, imageIndex);
+
+	// Add forward pass to render graph
+	m_renderGraph.AddPass("ForwardPass", [this, imageIndex](KGraphPass& pass)
 	{
-		m_forwardPass.renderParallel(frame.commandBuffer.GetHandle(), imageIndex, m_currentFrame,
-		                             m_renderScene, m_resources, m_jobSystem);
-	}
-	else
-	{
-		m_forwardPass.render(frame.commandBuffer.GetHandle(), imageIndex, m_renderScene, m_resources);
-	}
+		// Declare swapchain image as output
+		ResourceHandle colorTarget = m_renderGraph.ImportTexture(
+			"SwapchainImage",
+			m_swapchain.GetImages()[imageIndex],
+			m_swapchain.GetImageViews()[imageIndex].GetHandle(),
+			m_swapchain.GetExtent().width,
+			m_swapchain.GetExtent().height,
+			m_swapchain.GetImageFormat()
+		);
+
+		pass.WriteColor(colorTarget, 0, true);
+
+		pass.SetExecuteCallback([this](RenderContext& ctx)
+		{
+			m_forwardPass.Execute(ctx, m_renderScene, m_resources);
+		});
+	});
+
+	// Compile and execute
+	m_renderGraph.Compile();
+	m_renderGraph.Execute(cmd, &m_jobSystem, m_currentFrame, imageIndex);
 }
 
 void Engine::endFrame(uint32_t imageIndex)
@@ -307,7 +335,7 @@ void Engine::handleResize()
 	swapDesc.height = height;
 
 	m_swapchain.Recreate(m_coreContext.GetDevice(), m_coreContext.GetSurface().GetHandle(), swapSupport, swapDesc);
-	m_forwardPass.onResize(m_coreContext, m_swapchain);
+	m_forwardPass.OnResize(m_coreContext, m_swapchain);
 }
 
 } // namespace kEngine

@@ -1,4 +1,4 @@
-#include "forwardpass.h"
+#include "kforwardpass.h"
 #include "../resource/resourcemanager.h"
 #include "../resource/mesh.h"
 #include "../resource/material.h"
@@ -8,16 +8,17 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 namespace kEngine
 {
 
-static std::vector<uint32_t> loadSPIRV(const std::string& path)
+static std::vector<uint32_t> LoadSPIRV(const std::string& path)
 {
 	std::ifstream file(path, std::ios::ate | std::ios::binary);
 	if (!file.is_open())
 	{
-		std::cerr << "[ForwardPass] Failed to open shader: " << path << std::endl;
+		std::cerr << "[KForwardPass] Failed to open shader: " << path << std::endl;
 		return {};
 	}
 
@@ -28,43 +29,43 @@ static std::vector<uint32_t> loadSPIRV(const std::string& path)
 	return buffer;
 }
 
-bool ForwardPass::init(KCoreContext& ctx, KSwapchain& swapchain, ResourceManager& resources)
+bool KForwardPass::Init(KCoreContext& ctx, KSwapchain& swapchain, ResourceManager& resources)
 {
 	m_device = ctx.GetDevice().GetHandle();
 	VkPhysicalDevice physDevice = ctx.GetPhysicalDevice().GetHandle();
 	m_extent = swapchain.GetExtent();
 	VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
-	if (!createRenderPass(m_device, swapchain.GetImageFormat(), depthFormat))
+	if (!CreateRenderPass(m_device, swapchain.GetImageFormat(), depthFormat))
 		return false;
 
-	if (!createDepthResources(m_device, physDevice, m_extent.width, m_extent.height))
+	if (!CreateDepthResources(m_device, physDevice, m_extent.width, m_extent.height))
 		return false;
 
-	if (!createFramebuffers(m_device, swapchain))
+	if (!CreateFramebuffers(m_device, swapchain))
 		return false;
 
-	if (!createCameraDescriptorSetLayout(m_device))
+	if (!CreateCameraDescriptorSetLayout(m_device))
 		return false;
 
-	if (!createPipeline(m_device, m_extent, resources.getMaterialDescriptorSetLayout()))
+	if (!CreatePipeline(m_device, m_extent, resources.getMaterialDescriptorSetLayout()))
 		return false;
 
-	if (!createCameraUBO(m_device, physDevice))
+	if (!CreateCameraUBO(m_device, physDevice))
 		return false;
 
-	if (!createCameraDescriptorPool(m_device))
+	if (!CreateCameraDescriptorPool(m_device))
 		return false;
 
-	if (!createCameraDescriptorSet(m_device))
+	if (!CreateCameraDescriptorSet(m_device))
 		return false;
 
 	m_initialized = true;
-	std::cout << "[ForwardPass] Initialized" << std::endl;
+	std::cout << "[KForwardPass] Initialized" << std::endl;
 	return true;
 }
 
-void ForwardPass::destroy()
+void KForwardPass::Destroy()
 {
 	if (!m_initialized)
 		return;
@@ -76,24 +77,29 @@ void ForwardPass::destroy()
 	m_pipelineLayout.Destroy();
 	m_vertShader.Destroy();
 	m_fragShader.Destroy();
-	destroyFramebuffers();
-	destroyDepthResources();
+	DestroyFramebuffers();
+	DestroyDepthResources();
 	m_renderPass.Destroy();
 	m_initialized = false;
 }
 
-void ForwardPass::onResize(KCoreContext& ctx, KSwapchain& swapchain)
+void KForwardPass::OnResize(KCoreContext& ctx, KSwapchain& swapchain)
 {
 	m_extent = swapchain.GetExtent();
-	destroyFramebuffers();
-	destroyDepthResources();
+	DestroyFramebuffers();
+	DestroyDepthResources();
 
 	VkPhysicalDevice physDevice = ctx.GetPhysicalDevice().GetHandle();
-	createDepthResources(m_device, physDevice, m_extent.width, m_extent.height);
-	createFramebuffers(m_device, swapchain);
+	CreateDepthResources(m_device, physDevice, m_extent.width, m_extent.height);
+	CreateFramebuffers(m_device, swapchain);
 }
 
-void ForwardPass::render(VkCommandBuffer cmd, uint32_t imageIndex, const RenderScene& renderScene, ResourceManager& resources)
+void KForwardPass::SetupPass(KRenderGraph& graph, uint32_t imageIndex)
+{
+	m_currentImageIndex = imageIndex;
+}
+
+void KForwardPass::Execute(RenderContext& ctx, const RenderScene& renderScene, ResourceManager& resources)
 {
 	if (!m_initialized || !renderScene.hasCamera)
 		return;
@@ -103,11 +109,27 @@ void ForwardPass::render(VkCommandBuffer cmd, uint32_t imageIndex, const RenderS
 	memcpy(data, &renderScene.cameraData, sizeof(CameraUBO));
 	m_cameraUBO.Unmap();
 
-	// Begin render pass
+	// Check if parallel rendering is possible
+	bool useParallel = ctx.jobSystem != nullptr &&
+	                   ctx.jobSystem->IsInitialized() &&
+	                   renderScene.opaqueItems.size() > m_parallelThreshold;
+
+	if (useParallel)
+	{
+		ExecuteParallel(ctx, renderScene, resources);
+	}
+	else
+	{
+		ExecuteSingleThread(ctx.commandBuffer, renderScene, resources);
+	}
+}
+
+void KForwardPass::ExecuteSingleThread(VkCommandBuffer cmd, const RenderScene& renderScene, ResourceManager& resources)
+{
 	VkRenderPassBeginInfo rpBegin{};
 	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	rpBegin.renderPass = m_renderPass.GetHandle();
-	rpBegin.framebuffer = m_framebuffers[imageIndex].GetHandle();
+	rpBegin.framebuffer = m_framebuffers[m_currentImageIndex].GetHandle();
 	rpBegin.renderArea.extent = m_extent;
 
 	std::array<VkClearValue, 2> clearValues{};
@@ -117,9 +139,97 @@ void ForwardPass::render(VkCommandBuffer cmd, uint32_t imageIndex, const RenderS
 	rpBegin.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+
+	SetupCommandState(cmd);
+
+	for (const auto& item : renderScene.opaqueItems)
+	{
+		RecordRenderItem(cmd, item, resources);
+	}
+
+	vkCmdEndRenderPass(cmd);
+}
+
+void KForwardPass::ExecuteParallel(RenderContext& ctx, const RenderScene& renderScene, ResourceManager& resources)
+{
+	VkCommandBuffer primaryCmd = ctx.commandBuffer;
+	KJobSystem* jobSystem = ctx.jobSystem;
+	uint32_t frameIndex = ctx.frameIndex;
+
+	VkRenderPassBeginInfo rpBegin{};
+	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	rpBegin.renderPass = m_renderPass.GetHandle();
+	rpBegin.framebuffer = m_framebuffers[m_currentImageIndex].GetHandle();
+	rpBegin.renderArea.extent = m_extent;
+
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = {{0.02f, 0.02f, 0.05f, 1.0f}};
+	clearValues[1].depthStencil = {1.0f, 0};
+	rpBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	rpBegin.pClearValues = clearValues.data();
+
+	vkCmdBeginRenderPass(primaryCmd, &rpBegin, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+	uint32_t threadCount = jobSystem->GetThreadCount();
+	uint32_t itemCount = static_cast<uint32_t>(renderScene.opaqueItems.size());
+
+	if (itemCount == 0 || threadCount == 0)
+	{
+		vkCmdEndRenderPass(primaryCmd);
+		return;
+	}
+
+	std::vector<VkCommandBuffer> secondaryBuffers(threadCount);
+	uint32_t itemsPerThread = (itemCount + threadCount - 1) / threadCount;
+
+	jobSystem->ParallelFor(threadCount, [&](uint32_t threadIndex)
+	{
+		uint32_t start = threadIndex * itemsPerThread;
+		uint32_t end = std::min(start + itemsPerThread, itemCount);
+
+		if (start >= itemCount)
+		{
+			secondaryBuffers[threadIndex] = VK_NULL_HANDLE;
+			return;
+		}
+
+		KCommandBuffer& cmdBuf = jobSystem->GetSecondaryBuffer(threadIndex, frameIndex);
+		cmdBuf.Reset();
+		cmdBuf.BeginSecondary(m_renderPass.GetHandle(), 0, m_framebuffers[m_currentImageIndex].GetHandle());
+
+		VkCommandBuffer cmd = cmdBuf.GetHandle();
+		SetupCommandState(cmd);
+
+		for (uint32_t i = start; i < end; ++i)
+		{
+			RecordRenderItem(cmd, renderScene.opaqueItems[i], resources);
+		}
+
+		cmdBuf.End();
+		secondaryBuffers[threadIndex] = cmd;
+	});
+
+	std::vector<VkCommandBuffer> validBuffers;
+	for (auto buf : secondaryBuffers)
+	{
+		if (buf != VK_NULL_HANDLE)
+		{
+			validBuffers.push_back(buf);
+		}
+	}
+
+	if (!validBuffers.empty())
+	{
+		vkCmdExecuteCommands(primaryCmd, static_cast<uint32_t>(validBuffers.size()), validBuffers.data());
+	}
+
+	vkCmdEndRenderPass(primaryCmd);
+}
+
+void KForwardPass::SetupCommandState(VkCommandBuffer cmd)
+{
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.GetHandle());
 
-	// Set dynamic viewport and scissor
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -134,47 +244,39 @@ void ForwardPass::render(VkCommandBuffer cmd, uint32_t imageIndex, const RenderS
 	scissor.extent = m_extent;
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-	// Bind camera descriptor set
 	VkDescriptorSet cameraSet = m_cameraDescriptorSet.GetHandle();
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 0, 1, &cameraSet, 0, nullptr);
-
-	// Draw opaque items
-	for (const auto& item : renderScene.opaqueItems)
-	{
-		Mesh* mesh = resources.getMesh(item.meshID);
-		Material* material = resources.getMaterial(item.materialID);
-
-		if (!mesh || !mesh->isUploaded())
-			continue;
-
-		if (!material || !material->isUploaded())
-		{
-			material = resources.getMaterial(resources.getDefaultMaterial());
-			if (!material)
-				continue;
-		}
-
-		// Bind material descriptor set
-		VkDescriptorSet materialSet = material->descriptorSet.GetHandle();
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 1, 1, &materialSet, 0, nullptr);
-
-		// Push model matrix
-		vkCmdPushConstants(cmd, m_pipelineLayout.GetHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &item.transform);
-
-		// Bind vertex and index buffers
-		VkBuffer vb = mesh->vertexBuffer.GetHandle();
-		VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(cmd, 0, 1, &vb, &offset);
-		vkCmdBindIndexBuffer(cmd, mesh->indexBuffer.GetHandle(), 0, VK_INDEX_TYPE_UINT32);
-
-		// Draw
-		vkCmdDrawIndexed(cmd, mesh->getIndexCount(), 1, 0, 0, 0);
-	}
-
-	vkCmdEndRenderPass(cmd);
 }
 
-bool ForwardPass::createRenderPass(VkDevice device, VkFormat colorFormat, VkFormat depthFormat)
+void KForwardPass::RecordRenderItem(VkCommandBuffer cmd, const RenderItem& item, ResourceManager& resources)
+{
+	Mesh* mesh = resources.getMesh(item.meshID);
+	Material* material = resources.getMaterial(item.materialID);
+
+	if (!mesh || !mesh->isUploaded())
+		return;
+
+	if (!material || !material->isUploaded())
+	{
+		material = resources.getMaterial(resources.getDefaultMaterial());
+		if (!material)
+			return;
+	}
+
+	VkDescriptorSet materialSet = material->descriptorSet.GetHandle();
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 1, 1, &materialSet, 0, nullptr);
+
+	vkCmdPushConstants(cmd, m_pipelineLayout.GetHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &item.transform);
+
+	VkBuffer vb = mesh->vertexBuffer.GetHandle();
+	VkDeviceSize offset = 0;
+	vkCmdBindVertexBuffers(cmd, 0, 1, &vb, &offset);
+	vkCmdBindIndexBuffer(cmd, mesh->indexBuffer.GetHandle(), 0, VK_INDEX_TYPE_UINT32);
+
+	vkCmdDrawIndexed(cmd, mesh->getIndexCount(), 1, 0, 0, 0);
+}
+
+bool KForwardPass::CreateRenderPass(VkDevice device, VkFormat colorFormat, VkFormat depthFormat)
 {
 	KRenderPassCreateDesc desc;
 
@@ -222,7 +324,7 @@ bool ForwardPass::createRenderPass(VkDevice device, VkFormat colorFormat, VkForm
 	return m_renderPass.Init(device, desc);
 }
 
-bool ForwardPass::createDepthResources(VkDevice device, VkPhysicalDevice physDevice, uint32_t w, uint32_t h)
+bool KForwardPass::CreateDepthResources(VkDevice device, VkPhysicalDevice physDevice, uint32_t w, uint32_t h)
 {
 	VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
@@ -241,13 +343,13 @@ bool ForwardPass::createDepthResources(VkDevice device, VkPhysicalDevice physDev
 	return true;
 }
 
-void ForwardPass::destroyDepthResources()
+void KForwardPass::DestroyDepthResources()
 {
 	m_depthImageView.Destroy();
 	m_depthImage.Destroy();
 }
 
-bool ForwardPass::createFramebuffers(VkDevice device, KSwapchain& swapchain)
+bool KForwardPass::CreateFramebuffers(VkDevice device, KSwapchain& swapchain)
 {
 	m_framebuffers.resize(swapchain.GetImageCount());
 
@@ -266,7 +368,7 @@ bool ForwardPass::createFramebuffers(VkDevice device, KSwapchain& swapchain)
 	return true;
 }
 
-void ForwardPass::destroyFramebuffers()
+void KForwardPass::DestroyFramebuffers()
 {
 	for (auto& fb : m_framebuffers)
 	{
@@ -275,7 +377,7 @@ void ForwardPass::destroyFramebuffers()
 	m_framebuffers.clear();
 }
 
-bool ForwardPass::createCameraDescriptorSetLayout(VkDevice device)
+bool KForwardPass::CreateCameraDescriptorSetLayout(VkDevice device)
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings =
 	{
@@ -285,10 +387,10 @@ bool ForwardPass::createCameraDescriptorSetLayout(VkDevice device)
 	return m_cameraDescriptorSetLayout.Init(device, bindings);
 }
 
-bool ForwardPass::createPipeline(VkDevice device, VkExtent2D extent, VkDescriptorSetLayout materialLayout)
+bool KForwardPass::CreatePipeline(VkDevice device, VkExtent2D extent, VkDescriptorSetLayout materialLayout)
 {
-	auto vertSPV = loadSPIRV("assets/shaders/forward.vert.spv");
-	auto fragSPV = loadSPIRV("assets/shaders/forward.frag.spv");
+	auto vertSPV = LoadSPIRV("assets/shaders/forward.vert.spv");
+	auto fragSPV = LoadSPIRV("assets/shaders/forward.frag.spv");
 
 	if (vertSPV.empty() || fragSPV.empty())
 		return false;
@@ -355,14 +457,14 @@ bool ForwardPass::createPipeline(VkDevice device, VkExtent2D extent, VkDescripto
 	return m_pipeline.Init(device, desc);
 }
 
-bool ForwardPass::createCameraUBO(VkDevice device, VkPhysicalDevice physDevice)
+bool KForwardPass::CreateCameraUBO(VkDevice device, VkPhysicalDevice physDevice)
 {
 	return m_cameraUBO.Init(device, physDevice, sizeof(CameraUBO),
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-bool ForwardPass::createCameraDescriptorPool(VkDevice device)
+bool KForwardPass::CreateCameraDescriptorPool(VkDevice device)
 {
 	std::vector<VkDescriptorPoolSize> sizes =
 	{
@@ -372,7 +474,7 @@ bool ForwardPass::createCameraDescriptorPool(VkDevice device)
 	return m_cameraDescriptorPool.Init(device, sizes, 1);
 }
 
-bool ForwardPass::createCameraDescriptorSet(VkDevice device)
+bool KForwardPass::CreateCameraDescriptorSet(VkDevice device)
 {
 	if (!m_cameraDescriptorSet.Allocate(device, m_cameraDescriptorPool.GetHandle(), m_cameraDescriptorSetLayout.GetHandle()))
 		return false;
@@ -392,136 +494,6 @@ bool ForwardPass::createCameraDescriptorSet(VkDevice device)
 
 	m_cameraDescriptorSet.Update({write});
 	return true;
-}
-
-void ForwardPass::setupCommandState(VkCommandBuffer cmd)
-{
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.GetHandle());
-
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(m_extent.width);
-	viewport.height = static_cast<float>(m_extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-	VkRect2D scissor{};
-	scissor.offset = {0, 0};
-	scissor.extent = m_extent;
-	vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-	VkDescriptorSet cameraSet = m_cameraDescriptorSet.GetHandle();
-	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 0, 1, &cameraSet, 0, nullptr);
-}
-
-void ForwardPass::recordRenderItem(VkCommandBuffer cmd, const RenderItem& item, ResourceManager& resources)
-{
-	Mesh* mesh = resources.getMesh(item.meshID);
-	Material* material = resources.getMaterial(item.materialID);
-
-	if (!mesh || !mesh->isUploaded())
-		return;
-
-	if (!material || !material->isUploaded())
-	{
-		material = resources.getMaterial(resources.getDefaultMaterial());
-		if (!material)
-			return;
-	}
-
-	VkDescriptorSet materialSet = material->descriptorSet.GetHandle();
-	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout.GetHandle(), 1, 1, &materialSet, 0, nullptr);
-
-	vkCmdPushConstants(cmd, m_pipelineLayout.GetHandle(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &item.transform);
-
-	VkBuffer vb = mesh->vertexBuffer.GetHandle();
-	VkDeviceSize offset = 0;
-	vkCmdBindVertexBuffers(cmd, 0, 1, &vb, &offset);
-	vkCmdBindIndexBuffer(cmd, mesh->indexBuffer.GetHandle(), 0, VK_INDEX_TYPE_UINT32);
-
-	vkCmdDrawIndexed(cmd, mesh->getIndexCount(), 1, 0, 0, 0);
-}
-
-void ForwardPass::renderParallel(VkCommandBuffer primaryCmd, uint32_t imageIndex, uint32_t frameIndex,
-                                 const RenderScene& renderScene, ResourceManager& resources, KJobSystem& jobSystem)
-{
-	if (!m_initialized || !renderScene.hasCamera)
-		return;
-
-	void* data = m_cameraUBO.Map();
-	memcpy(data, &renderScene.cameraData, sizeof(CameraUBO));
-	m_cameraUBO.Unmap();
-
-	VkRenderPassBeginInfo rpBegin{};
-	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	rpBegin.renderPass = m_renderPass.GetHandle();
-	rpBegin.framebuffer = m_framebuffers[imageIndex].GetHandle();
-	rpBegin.renderArea.extent = m_extent;
-
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = {{0.02f, 0.02f, 0.05f, 1.0f}};
-	clearValues[1].depthStencil = {1.0f, 0};
-	rpBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	rpBegin.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(primaryCmd, &rpBegin, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-
-	uint32_t threadCount = jobSystem.GetThreadCount();
-	uint32_t itemCount = static_cast<uint32_t>(renderScene.opaqueItems.size());
-
-	if (itemCount == 0 || threadCount == 0)
-	{
-		vkCmdEndRenderPass(primaryCmd);
-		return;
-	}
-
-	std::vector<VkCommandBuffer> secondaryBuffers(threadCount);
-	uint32_t itemsPerThread = (itemCount + threadCount - 1) / threadCount;
-
-	jobSystem.ParallelFor(threadCount, [&](uint32_t threadIndex)
-	{
-		uint32_t start = threadIndex * itemsPerThread;
-		uint32_t end = std::min(start + itemsPerThread, itemCount);
-
-		if (start >= itemCount)
-		{
-			secondaryBuffers[threadIndex] = VK_NULL_HANDLE;
-			return;
-		}
-
-		KCommandBuffer& cmdBuf = jobSystem.GetSecondaryBuffer(threadIndex, frameIndex);
-		cmdBuf.Reset();
-		cmdBuf.BeginSecondary(m_renderPass.GetHandle(), 0, m_framebuffers[imageIndex].GetHandle());
-
-		VkCommandBuffer cmd = cmdBuf.GetHandle();
-		setupCommandState(cmd);
-
-		for (uint32_t i = start; i < end; ++i)
-		{
-			recordRenderItem(cmd, renderScene.opaqueItems[i], resources);
-		}
-
-		cmdBuf.End();
-		secondaryBuffers[threadIndex] = cmd;
-	});
-
-	std::vector<VkCommandBuffer> validBuffers;
-	for (auto buf : secondaryBuffers)
-	{
-		if (buf != VK_NULL_HANDLE)
-		{
-			validBuffers.push_back(buf);
-		}
-	}
-
-	if (!validBuffers.empty())
-	{
-		vkCmdExecuteCommands(primaryCmd, static_cast<uint32_t>(validBuffers.size()), validBuffers.data());
-	}
-
-	vkCmdEndRenderPass(primaryCmd);
 }
 
 } // namespace kEngine

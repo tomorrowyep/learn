@@ -42,6 +42,7 @@ public:
 
 	uint32_t GetImageCount() const { return static_cast<uint32_t>(m_images.size()); }
 
+	const std::vector<VkImage>& GetImages() const { return m_images; }
 	const std::vector<KImageView>& GetImageViews() const { return m_imageViews; }
 
 private:
